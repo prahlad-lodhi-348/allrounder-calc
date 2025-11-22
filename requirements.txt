@@ -1,0 +1,6 @@
+Django>=4.1
+sympy>=1.10
+plotly>=5.13
+gunicorn>=20.1
+whitenoise>=6.4
+numpy>=1.23

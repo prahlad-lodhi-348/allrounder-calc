@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: allrounder-calc
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn allrounder_calc.wsgi
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        fromDatabase: false
+        value: 'replace-this-with-a-secure-secret-key'
+      - key: DJANGO_DEBUG
+        fromDatabase: false
+        value: 'False'

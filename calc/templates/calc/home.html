@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AllRounder Calc</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #sidebar {
+            width: 220px;
+            background-color: #282c34;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 1em;
+        }
+        #sidebar h2 {
+            font-size: 1.2em;
+            margin-bottom: 1em;
+        }
+        #sidebar button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 0.75em 1em;
+            margin: 0.2em 0;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1em;
+            border-radius: 4px;
+        }
+        #sidebar button.active,
+        #sidebar button:hover {
+            background-color: #61dafb;
+            color: black;
+        }
+        #container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1em;
+        }
+        #input-area {
+            margin-bottom: 1em;
+        }
+        #input-area input[type="text"] {
+            width: 60%;
+            padding: 0.5em;
+            font-size: 1.2em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        #input-area button {
+            padding: 0.5em 1em;
+            font-size: 1.1em;
+            margin-left: 0.5em;
+            border: none;
+            border-radius: 6px;
+            background-color: #61dafb;
+            color: black;
+            cursor: pointer;
+        }
+        #results {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 1em;
+            border-radius: 6px;
+            background: #f9f9f9;
+            margin-bottom: 1em;
+        }
+        .step {
+            margin-bottom: 1em;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 0.3em;
+        }
+        #plotly-container {
+            height: 300px;
+        }
+        #plot-controls {
+            margin-bottom: 1em;
+        }
+        #plot-controls input[type="number"] {
+            width: 80px;
+            padding: 0.3em;
+            margin-right: 0.5em;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Actions</h2>
+        <button class="active" data-op="">General</button>
+        <button data-op="simplify">Simplify</button>
+        <button data-op="diff">Differentiate</button>
+        <button data-op="integrate">Integrate</button>
+        <button data-op="solve">Solve</button>
+    </div>
+    <div id="container">
+        <div id="input-area">
+            <input type="text" id="expr-input" placeholder="Enter math expression" />
+            <button id="evaluate-btn">Evaluate</button>
+        </div>
+        <div id="results"></div>
+        <div id="plot-controls">
+            <label for="xmin">X min:</label>
+            <input type="number" id="xmin" value="-10" step="any" />
+            <label for="xmax">X max:</label>
+            <input type="number" id="xmax" value="10" step="any" />
+            <label for="points">Points:</label>
+            <input type="number" id="points" value="500" min="10" max="2000" step="1" />
+            <button id="plot-btn">Plot</button>
+        </div>
+        <div id="plotly-container"></div>
+    </div>
+
+    <script>
+        let selectedOp = '';
+
+        const buttons = document.querySelectorAll('#sidebar button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedOp = btn.getAttribute('data-op');
+                clearResults();
+            });
+        });
+
+        document.getElementById('evaluate-btn').addEventListener('click', () => {
+            const expr = document.getElementById('expr-input').value.trim();
+            if (!expr) {
+                alert('Please enter a math expression.');
+                return;
+            }
+            evaluateExpression(expr, selectedOp);
+        });
+
+        document.getElementById('plot-btn').addEventListener('click', () => {
+            const expr = document.getElementById('expr-input').value.trim();
+            if (!expr) {
+                alert('Please enter a math expression.');
+                return;
+            }
+            const xmin = document.getElementById('xmin').value;
+            const xmax = document.getElementById('xmax').value;
+            const points = document.getElementById('points').value;
+            plotExpression(expr, xmin, xmax, points);
+        });
+
+        function clearResults() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            Plotly.purge('plotly-container');
+        }
+
+        async function evaluateExpression(expr, op) {
+            clearResults();
+            try {
+                const response = await fetch('/api/eval', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({expr, op: op || null}),
+                });
+                const data = await response.json();
+                if (!data.ok) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                renderSteps(data.steps);
+            } catch (err) {
+                alert('Failed to evaluate expression.');
+            }
+        }
+
+        function renderSteps(steps) {
+            const results = document.getElementById('results');
+            steps.forEach(step => {
+                const div = document.createElement('div');
+                div.classList.add('step');
+                const title = document.createElement('div');
+                title.classList.add('step-title');
+                title.textContent = step.title;
+                const latex = document.createElement('div');
+                latex.innerHTML = '\\(' + step.latex + '\\)';
+                div.appendChild(title);
+                div.appendChild(latex);
+                results.appendChild(div);
+            });
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        async function plotExpression(expr, xmin, xmax, points) {
+            try {
+                const response = await fetch('/api/plot', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({expr, xmin, xmax, points}),
+                });
+                const data = await response.json();
+                if (!data.ok) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                renderPlot(data.data);
+            } catch (err) {
+                alert('Failed to plot expression.');
+            }
+        }
+
+        function renderPlot(plotData) {
+            const trace = {
+                x: plotData.x,
+                y: plotData.y,
+                mode: 'lines',
+                type: 'scatter',
+                line: {color: '#61dafb'}
+            };
+            const layout = {
+                autosize: true,
+                margin: { t: 30, b: 40, l: 50, r: 30 },
+                xaxis: { title: 'x', autorange: true },
+                yaxis: { title: 'y', autorange: true },
+            };
+            Plotly.newPlot('plotly-container', [trace], layout, {responsive: true});
+        }
+    </script>
+</body>
+</html>
