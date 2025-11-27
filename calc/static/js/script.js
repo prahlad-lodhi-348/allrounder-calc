@@ -134,8 +134,8 @@ function evaluateExpression(expr, op) {
             callSymbolicApi(expr, 'diff');
             return;
         } else if (op === 'integrate') {
-            // Basic integration - this is simplified
-            alert('Integration requires symbolic math library. Please use basic evaluation for now.');
+            // Call API for symbolic integration
+            callSymbolicApi(expr, 'integrate');
             return;
         } else if (op === 'solve') {
             // Basic solving - this is simplified
