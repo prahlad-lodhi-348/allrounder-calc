@@ -17,6 +17,7 @@ def safe_parse(expr_str):
     Raises ValueError for invalid expressions.
     """
     try:
+        expr_str = expr_str.replace('X', 'x')
         expr = parse_expr(expr_str, transformations=TRANSFORMATIONS, evaluate=True)
         return expr
     except Exception as e:

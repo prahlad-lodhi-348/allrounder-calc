@@ -1,246 +1,178 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>AllRounder Calc</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0; padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #sidebar {
-            width: 220px;
-            background-color: #282c34;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 1em;
-        }
-        #sidebar h2 {
-            font-size: 1.2em;
-            margin-bottom: 1em;
-        }
-        #sidebar button {
-            background: none;
-            border: none;
-            color: white;
-            padding: 0.75em 1em;
-            margin: 0.2em 0;
-            cursor: pointer;
-            text-align: left;
-            font-size: 1em;
-            border-radius: 4px;
-        }
-        #sidebar button.active,
-        #sidebar button:hover {
-            background-color: #61dafb;
-            color: black;
-        }
-        #container {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1em;
-        }
-        #input-area {
-            margin-bottom: 1em;
-        }
-        #input-area input[type="text"] {
-            width: 60%;
-            padding: 0.5em;
-            font-size: 1.2em;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-        #input-area button {
-            padding: 0.5em 1em;
-            font-size: 1.1em;
-            margin-left: 0.5em;
-            border: none;
-            border-radius: 6px;
-            background-color: #61dafb;
-            color: black;
-            cursor: pointer;
-        }
-        #results {
-            flex-grow: 1;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 1em;
-            border-radius: 6px;
-            background: #f9f9f9;
-            margin-bottom: 1em;
-        }
-        .step {
-            margin-bottom: 1em;
-        }
-        .step-title {
-            font-weight: bold;
-            margin-bottom: 0.3em;
-        }
-        #plotly-container {
-            height: 300px;
-        }
-        #plot-controls {
-            margin-bottom: 1em;
-        }
-        #plot-controls input[type="number"] {
-            width: 80px;
-            padding: 0.3em;
-            margin-right: 0.5em;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-    </style>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Custom CSS -->
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
 </head>
 <body>
-    <div id="sidebar">
-        <h2>Actions</h2>
-        <button class="active" data-op="">General</button>
-        <button data-op="simplify">Simplify</button>
-        <button data-op="diff">Differentiate</button>
-        <button data-op="integrate">Integrate</button>
-        <button data-op="solve">Solve</button>
-    </div>
-    <div id="container">
-        <div id="input-area">
-            <input type="text" id="expr-input" placeholder="Enter math expression" />
-            <button id="evaluate-btn">Evaluate</button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky">
+                    <h2 class="text-white mt-3"><i class="fas fa-calculator me-2"></i>Actions</h2>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <button class="nav-link btn active" data-op=""><i class="fas fa-home me-2"></i>General</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link btn" data-op="simplify"><i class="fas fa-simplify me-2"></i>Simplify</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link btn" data-op="diff"><i class="fas fa-chart-line me-2"></i>Differentiate</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link btn" data-op="integrate"><i class="fas fa-integral me-2"></i>Integrate</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link btn" data-op="solve"><i class="fas fa-equals me-2"></i>Solve</button>
+                        </li>
+                    </ul>
+                    <!-- Dark Mode Toggle -->
+                    <div class="mt-3">
+                        <button id="dark-mode-toggle" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-moon me-2"></i>Dark Mode
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main id="container" class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Mobile Sidebar Toggle -->
+                <button class="btn btn-primary d-md-none sidebar-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <!-- Input Area -->
+                <div id="input-area" class="my-4">
+                    <div class="input-group">
+                        <input type="text" id="expr-input" class="form-control" placeholder="Enter math expression" aria-label="Math expression input">
+                        <button id="evaluate-btn" class="btn btn-primary"><i class="fas fa-play me-2"></i>Evaluate</button>
+                    </div>
+                </div>
+
+                <!-- Results Area -->
+                <div id="results" class="mb-4"></div>
+
+                <!-- Plot Controls -->
+                <div id="plot-controls" class="card p-3 mb-4">
+                    <h5 class="card-title"><i class="fas fa-chart-area me-2"></i>Plot Controls</h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="xmin" class="form-label">X min:</label>
+                            <input type="number" id="xmin" class="form-control" value="-10" step="any">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="xmax" class="form-label">X max:</label>
+                            <input type="number" id="xmax" class="form-control" value="10" step="any">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="points" class="form-label">Points:</label>
+                            <input type="number" id="points" class="form-control" value="500" min="10" max="2000" step="1">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button id="plot-btn" class="btn btn-success w-100"><i class="fas fa-chart-line me-2"></i>Plot</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plotly Container -->
+                <div id="plotly-container" class="mb-4"></div>
+
+                <!-- Financial Calculators -->
+                <div id="financial-calculators" class="mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Financial Calculators</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="nav nav-tabs" id="calculator-tabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="simple-tab" data-bs-toggle="tab" data-bs-target="#simple-interest" type="button" role="tab" aria-controls="simple-interest" aria-selected="true">
+                                        <i class="fas fa-percent me-2"></i>Simple Interest
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="compound-tab" data-bs-toggle="tab" data-bs-target="#compound-interest" type="button" role="tab" aria-controls="compound-interest" aria-selected="false">
+                                        <i class="fas fa-chart-pie me-2"></i>Compound Interest
+                                    </button>
+                                </li>
+                            </ul>
+                            <div class="tab-content mt-3" id="calculator-content">
+                                <!-- Simple Interest Tab -->
+                                <div class="tab-pane fade show active" id="simple-interest" role="tabpanel" aria-labelledby="simple-tab">
+                                    <form id="si-form">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="si-principal" class="form-label">Principal:</label>
+                                                <input type="number" id="si-principal" name="principal" min="0" step="any" required class="form-control">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="si-rate" class="form-label">Rate (% per annum):</label>
+                                                <input type="number" id="si-rate" name="rate" min="0" step="any" required class="form-control">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="si-time" class="form-label">Time (years):</label>
+                                                <input type="number" id="si-time" name="time" min="0" step="any" required class="form-control">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-calculator me-2"></i>Calculate</button>
+                                    </form>
+                                    <div id="si-result" class="result-box alert alert-success mt-3" style="display: none;"></div>
+                                </div>
+                                <!-- Compound Interest Tab -->
+                                <div class="tab-pane fade" id="compound-interest" role="tabpanel" aria-labelledby="compound-tab">
+                                    <form id="ci-form">
+                                        <div class="row g-3">
+                                            <div class="col-md-3">
+                                                <label for="ci-principal" class="form-label">Principal:</label>
+                                                <input type="number" id="ci-principal" name="principal" min="0" step="any" required class="form-control">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="ci-rate" class="form-label">Rate (% per annum):</label>
+                                                <input type="number" id="ci-rate" name="rate" min="0" step="any" required class="form-control">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="ci-time" class="form-label">Time (years):</label>
+                                                <input type="number" id="ci-time" name="time" min="0" step="any" required class="form-control">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="ci-frequency" class="form-label">Compounding Frequency:</label>
+                                                <input type="number" id="ci-frequency" name="frequency" min="1" step="1" required class="form-control">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-calculator me-2"></i>Calculate</button>
+                                    </form>
+                                    <div id="ci-result" class="result-box alert alert-success mt-3" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
-        <div id="results"></div>
-        <div id="plot-controls">
-            <label for="xmin">X min:</label>
-            <input type="number" id="xmin" value="-10" step="any" />
-            <label for="xmax">X max:</label>
-            <input type="number" id="xmax" value="10" step="any" />
-            <label for="points">Points:</label>
-            <input type="number" id="points" value="500" min="10" max="2000" step="1" />
-            <button id="plot-btn">Plot</button>
-        </div>
-        <div id="plotly-container"></div>
     </div>
 
-    <script>
-        let selectedOp = '';
 
-        const buttons = document.querySelectorAll('#sidebar button');
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                buttons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedOp = btn.getAttribute('data-op');
-                clearResults();
-            });
-        });
 
-        document.getElementById('evaluate-btn').addEventListener('click', () => {
-            const expr = document.getElementById('expr-input').value.trim();
-            if (!expr) {
-                alert('Please enter a math expression.');
-                return;
-            }
-            evaluateExpression(expr, selectedOp);
-        });
-
-        document.getElementById('plot-btn').addEventListener('click', () => {
-            const expr = document.getElementById('expr-input').value.trim();
-            if (!expr) {
-                alert('Please enter a math expression.');
-                return;
-            }
-            const xmin = document.getElementById('xmin').value;
-            const xmax = document.getElementById('xmax').value;
-            const points = document.getElementById('points').value;
-            plotExpression(expr, xmin, xmax, points);
-        });
-
-        function clearResults() {
-            const results = document.getElementById('results');
-            results.innerHTML = '';
-            Plotly.purge('plotly-container');
-        }
-
-        async function evaluateExpression(expr, op) {
-            clearResults();
-            try {
-                const response = await fetch('/api/eval', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({expr, op: op || null}),
-                });
-                const data = await response.json();
-                if (!data.ok) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-                renderSteps(data.steps);
-            } catch (err) {
-                alert('Failed to evaluate expression.');
-            }
-        }
-
-        function renderSteps(steps) {
-            const results = document.getElementById('results');
-            steps.forEach(step => {
-                const div = document.createElement('div');
-                div.classList.add('step');
-                const title = document.createElement('div');
-                title.classList.add('step-title');
-                title.textContent = step.title;
-                const latex = document.createElement('div');
-                latex.innerHTML = '\\(' + step.latex + '\\)';
-                div.appendChild(title);
-                div.appendChild(latex);
-                results.appendChild(div);
-            });
-            if (window.MathJax) {
-                MathJax.typesetPromise();
-            }
-        }
-
-        async function plotExpression(expr, xmin, xmax, points) {
-            try {
-                const response = await fetch('/api/plot', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({expr, xmin, xmax, points}),
-                });
-                const data = await response.json();
-                if (!data.ok) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-                renderPlot(data.data);
-            } catch (err) {
-                alert('Failed to plot expression.');
-            }
-        }
-
-        function renderPlot(plotData) {
-            const trace = {
-                x: plotData.x,
-                y: plotData.y,
-                mode: 'lines',
-                type: 'scatter',
-                line: {color: '#61dafb'}
-            };
-            const layout = {
-                autosize: true,
-                margin: { t: 30, b: 40, l: 50, r: 30 },
-                xaxis: { title: 'x', autorange: true },
-                yaxis: { title: 'y', autorange: true },
-            };
-            Plotly.newPlot('plotly-container', [trace], layout, {responsive: true});
-        }
-    </script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

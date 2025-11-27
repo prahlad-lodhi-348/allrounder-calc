@@ -11,6 +11,13 @@ class SympyUtilsTests(TestCase):
         expr = safe_parse("x^2 + 2*x + 1")
         self.assertIsInstance(expr, sp.Basic)
 
+    def test_safe_parse_capital_X(self):
+        expr = safe_parse("X^2 + 2*X + 1")
+        self.assertIsInstance(expr, sp.Basic)
+        # Check that X is converted to x
+        self.assertIn(sp.Symbol('x'), expr.free_symbols)
+        self.assertNotIn(sp.Symbol('X'), expr.free_symbols)
+
     def test_safe_parse_invalid(self):
         with self.assertRaises(ValueError):
             safe_parse("import os; os.system('rm -rf /')")

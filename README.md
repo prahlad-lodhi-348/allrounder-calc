@@ -78,6 +78,17 @@ Run tests with:
 python manage.py test calc
 ```
 
+## Upcoming Features
+
+- User authentication and login system
+- Operation history tracking (with localStorage and database)
+- Scientific calculator with advanced functions
+- Formula reference library
+- Physics problem solver
+- Chemistry problem solver with chemical equations
+- Element and compound constants database
+- Interactive step-by-step solutions
+
 ## Future Extensions
 
 - Numeric substitution (e.g., `x=2`) with `subs` and `evalf`.
