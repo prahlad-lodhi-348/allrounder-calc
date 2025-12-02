@@ -1,0 +1,239 @@
+/* Custom styles for AllRounder Calc using Bootstrap 5 */
+
+/* Body and general layout */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+/* Sidebar styles */
+#sidebar {
+    background-color: #343a40;
+    color: white;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+#sidebar h2 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+#sidebar .btn {
+    background: none;
+    border: none;
+    color: #adb5bd;
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s, color 0.3s;
+    width: 100%;
+}
+
+#sidebar .btn.active,
+#sidebar .btn:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Main container */
+#container {
+    padding: 1.5rem;
+    background-color: white;
+    min-height: 100vh;
+}
+
+/* Input area */
+#input-area .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ced4da;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+}
+
+#input-area .btn-primary {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+/* Results area */
+#results {
+    border: 1px solid #dee2e6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.step {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: white;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.step-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+/* Plot controls */
+#plot-controls {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #e9ecef;
+    border-radius: 0.5rem;
+}
+
+#plot-controls .form-control {
+    width: auto;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+#plot-controls label {
+    margin-right: 0.25rem;
+    font-weight: 500;
+}
+
+/* Plotly container */
+#plotly-container {
+    height: 400px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background-color: white;
+}
+
+/* Financial calculators */
+#financial-calculators {
+    margin-top: 2rem;
+}
+
+#financial-calculators .card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+#financial-calculators .card-header {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+}
+
+#financial-calculators .form-group {
+    margin-bottom: 1rem;
+}
+
+#financial-calculators .form-control {
+    border-radius: 0.375rem;
+}
+
+#financial-calculators .btn-primary {
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+}
+
+.result-box {
+    margin-top: 0.5rem;
+    font-weight: 600;
+    color: #f9fafb;
+    background-color: #0f172a;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+/* Ensure inner Bootstrap alerts inherit readable contrast */
+#si-result .alert,
+#ci-result .alert,
+#currency-result .alert {
+    background-color: transparent;
+    color: inherit;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+}
+
+/* Currency converter result main line: green, bold, larger */
+#currency-result .alert-success h5 {
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 1.3rem;
+}
+
+/* Hide any emergency debug buttons if still injected */
+button[onclick^="testApiEndpoint"],
+button[onclick^="manualExecute"] {
+    display: none !important;
+}
+
+/* Hide any emergency debug buttons if still injected */
+button[onclick^="testApiEndpoint"],
+button[onclick^="manualExecute"] {
+    display: none !important;
+}
+
+/* Currency converter result styling */
+#currency-result .alert-success h5 {
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 1.3rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px;
+        width: 250px;
+        z-index: 1000;
+        transition: left 0.3s;
+    }
+    #sidebar.show {
+        left: 0;
+    }
+    #container {
+        margin-left: 0;
+    }
+    .sidebar-toggle {
+        display: block;
+    }
+}
+
+/* Dark mode (optional) */
+body.dark-mode {
+    background-color: #212529;
+    color: #f8f9fa;
+}
+
+body.dark-mode #sidebar {
+    background-color: #495057;
+}
+
+body.dark-mode #container {
+    background-color: #343a40;
+    color: #f8f9fa;
+}
+
+body.dark-mode #results,
+body.dark-mode #plotly-container {
+    background-color: #495057;
+    border-color: #6c757d;
+}
+
+body.dark-mode .step {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+/* Utility classes */
+.text-primary { color: #0d6efd !important; }
+.bg-light { background-color: #f8f9fa !important; }
+.shadow { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important; }
