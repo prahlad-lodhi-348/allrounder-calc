@@ -1,315 +1,1209 @@
 <!DOCTYPE html>
-{% load static %}
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>AllRounder Calc</title>
-    <!-- Bootstrap 5 CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllRounder Calculator - By Prahlad Lodhi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Plot Libraries -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-    <!-- Polyfill -->
-    <script src="https://cdn.jsdelivr.net/npm/babel-polyfill@6.26.0/dist/polyfill.min.js"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <!-- Custom CSS -->
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
-    <link href="{% static 'css/math-keyboard.css' %}" rel="stylesheet">
-    <link href="{% static 'css/modern-ui.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Main Content -->
-            <main id="container" class="col-12">
-                <!-- Top Controls -->
-                <div class="top-controls">
-                    <button class="control-btn" id="keyboard-btn" title="Open math keyboard">
-                      ⌨️ Keyboard
-                    </button>
-                </div>
+<body class="dark-theme">
+    <div class="container-fluid min-vh-100 d-flex flex-column">
+        <!-- Header -->
+        <header class="navbar-custom py-3 border-bottom border-primary">
+            <div class="container">
+                <h1 class="text-white mb-0">
+                    <i class="fas fa-calculator me-2"></i>AllRounder Calculator
+                </h1>
+                <small class="text-secondary">Created by: <strong>Prahlad Lodhi</strong></small>
+            </div>
+        </header>
 
-                <!-- Main Calculator (Advanced Calculus) -->
-                <div class="advanced-calc-card main-calculator">
-                    <div class="section-header">
-                      🧮 Calculator - All Operations
+        <!-- Main Content -->
+        <main class="flex-grow-1 py-4">
+            <div class="container">
+                <!-- Advanced Calculus Section -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header bg-primary-custom">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-function me-2"></i>Advanced Calculus Calculator
+                        </h5>
                     </div>
-                    <div class="calc-body">
-                      <!-- Expression Input -->
-                      <div class="form-group">
-                        <label for="adv-expression">Expression:</label>
-                        <textarea
-                          id="adv-expression"
-                          class="expression-textarea"
-                          placeholder="Enter expression: e.g., sin(x), x**2 + y**2, log(x)*cos(y)"
-                          rows="3"
-                          autofocus
-                        ></textarea>
-                        <small class="hint">Supported variables: x, y, z, t | Use ** for power (e.g., x**2)</small>
-                      </div>
-
-                      <!-- Operation Selector -->
-                      <div class="form-row">
-                        <div class="form-group">
-                          <label for="operation-select">Operation:</label>
-                          <select id="operation-select" class="operation-dropdown">
-                            <optgroup label="Basic Operations">
-                              <option value="evaluate" selected>Evaluate (Calculate Result)</option>
-                              <option value="simplify">Simplify</option>
-                            </optgroup>
-                            <optgroup label="Calculus Operations">
-                              <option value="differentiate">Differentiate</option>
-                              <option value="integrate">Integrate (Indefinite)</option>
-                              <option value="definite_integral">Definite Integral</option>
-                              <option value="partial_derivative">Partial Derivative</option>
-                            </optgroup>
-                            <optgroup label="Algebra Operations">
-                              <option value="solve">Solve Equation</option>
-                              <option value="expand">Expand</option>
-                              <option value="factor">Factor</option>
-                            </optgroup>
-                            <optgroup label="Plotting">
-                              <option value="plot_2d">Plot 2D Graph</option>
-                              <option value="plot_3d">Plot 3D Surface</option>
-                            </optgroup>
-                            <optgroup label="Advanced">
-                              <option value="series">Taylor Series</option>
-                              <option value="limit">Limit</option>
-                            </optgroup>
-                          </select>
-                        </div>
-                        <div class="form-group" id="variable-group">
-                          <label for="variable-select">With respect to:</label>
-                          <select id="variable-select" class="variable-dropdown">
-                            <option value="x" selected>x</option>
-                            <option value="y">y</option>
-                            <option value="z">z</option>
-                            <option value="t">t</option>
-                          </select>
-                        </div>
-                      </div>
-                      <!-- Plot Settings (shown when Plot operation selected) -->
-                      <div class="plot-settings" id="plot-settings-section" style="display: none;">
-                        <h4>📊 Plot Settings</h4>
-                        <div class="settings-grid">
-                          <div class="form-group">
-                            <label for="x-min">X min:</label>
-                            <input type="number" id="x-min" value="-5" step="0.5" />
-                          </div>
-                          <div class="form-group">
-                            <label for="x-max">X max:</label>
-                            <input type="number" id="x-max" value="5" step="0.5" />
-                          </div>
-                          <div class="form-group">
-                            <label for="y-min">Y min (for 3D):</label>
-                            <input type="number" id="y-min" value="-5" step="0.5" />
-                          </div>
-                          <div class="form-group">
-                            <label for="y-max">Y max (for 3D):</label>
-                            <input type="number" id="y-max" value="5" step="0.5" />
-                          </div>
-                          <div class="form-group">
-                            <label for="x-points">X Points:</label>
-                            <input type="number" id="x-points" value="60" min="10" max="200" />
-                          </div>
-                          <div class="form-group">
-                            <label for="y-points">Y Points:</label>
-                            <input type="number" id="y-points" value="60" min="10" max="200" />
-                          </div>
-                        </div>
-                      </div>
-                      <!-- Action Buttons -->
-                      <div class="action-buttons">
-                        <button class="btn-execute" id="execute-btn">
-                          🚀 Execute
-                        </button>
-                        <button class="btn-execute btn-plot" id="plot-graph-btn">
-                          📈 Plot Graph
-                        </button>
-                        <button class="btn-clear" id="clear-btn">
-                          🗑️ Clear
-                        </button>
-                      </div>
-                      <div class="results-area" id="results-display">
-                        <h4>Results:</h4>
-                        <div class="result-content" id="result-content">
-                          Results will appear here after calculation...
-                        </div>
-                      </div>
-
-                      <!-- Plot Container -->
-                      <div id="plot-container" style="display: none;">
-                        <div id="plot-loading" class="alert alert-info" style="display: none;">Generating plot...</div>
-                        <canvas id="plot-canvas" style="display: none;"></canvas>
-                        <div id="plotly-surface" class="plotly-surface" style="display: none;"></div>
-                      </div>
-                    </div>
-                </div>
-
-
-
-                <!-- Financial Calculators -->
-                <div class="financial-calc-card">
-                    <div class="section-header">
-                      💰 Financial Calculators
-                    </div>
-                    <div class="calc-tabs">
-                      <button class="calc-tab active" data-calc="simple-interest">
-                        📈 Simple Interest
-                      </button>
-                      <button class="calc-tab" data-calc="compound-interest">
-                        💰 Compound Interest
-                      </button>
-                      <button class="calc-tab" data-calc="currency-converter">
-                        💱 Currency Converter
-                      </button>
-                    </div>
-                    <div class="calc-content">
-                      <div id="simple-interest-content" class="tab-content active">
-                        <form id="si-form">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label for="si-principal" class="form-label">Principal:</label>
-                                    <input type="number" id="si-principal" name="principal" min="0" step="any" required class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="si-rate" class="form-label">Rate (% per annum):</label>
-                                    <input type="number" id="si-rate" name="rate" min="0" step="any" required class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="si-time" class="form-label">Time (years):</label>
-                                    <input type="number" id="si-time" name="time" min="0" step="any" required class="form-control">
-                                </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-lg-8">
+                                <label for="expr" class="form-label">Mathematical Expression</label>
+                                <input type="text" id="expr" class="form-control form-control-custom" 
+                                       placeholder="e.g., x**2 + 3*x + 2, sin(x), (x**2)/(x+1)">
+                                <small class="text-secondary mt-1 d-block">Use x, y, z, or t for variables. Examples: sin(x), cos(2*x), exp(x), sqrt(x)</small>
                             </div>
-                            <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-calculator me-2"></i>Calculate</button>
-                            <button type="button" class="btn btn-outline-info mt-2" id="si-plot-btn">
-                              <i class="fas fa-chart-line me-2"></i>Plot Growth
-                            </button>
-                        </form>
-                        <div id="si-result" class="result-box alert alert-success mt-3"></div>
-                      </div>
-                      <div id="compound-interest-content" class="tab-content">
-                        <form id="ci-form">
-                            <div class="row g-3">
-                                <div class="col-md-3">
-                                    <label for="ci-principal" class="form-label">Principal:</label>
-                                    <input type="number" id="ci-principal" name="principal" min="0" step="any" required class="form-control">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="ci-rate" class="form-label">Rate (% per annum):</label>
-                                    <input type="number" id="ci-rate" name="rate" min="0" step="any" required class="form-control">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="ci-time" class="form-label">Time (years):</label>
-                                    <input type="number" id="ci-time" name="time" min="0" step="any" required class="form-control">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="ci-frequency" class="form-label">Compounding Frequency:</label>
-                                    <input type="number" id="ci-frequency" name="frequency" min="1" step="1" required class="form-control">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-calculator me-2"></i>Calculate</button>
-                            <button type="button" class="btn btn-outline-info mt-2" id="ci-plot-btn">
-                              <i class="fas fa-chart-line me-2"></i>Plot Growth
-                            </button>
-                        </form>
-                        <div id="ci-result" class="result-box alert alert-success mt-3" style="display: none;"></div>
-                      </div>
-                      <div id="currency-converter-content" class="tab-content">
-                        <form id="currency-form" class="currency-form">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label for="currency-amount" class="form-label">Amount:</label>
-                                    <input type="number" id="currency-amount" class="form-control" placeholder="100" min="0" step="any" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="from-currency" class="form-label">From:</label>
-                                    <select id="from-currency" class="form-select">
-                                        <option value="USD">USD - US Dollar</option>
-                                        <option value="INR" selected>INR - Indian Rupee</option>
-                                        <option value="EUR">EUR - Euro</option>
-                                        <option value="GBP">GBP - British Pound</option>
-                                        <option value="JPY">JPY - Japanese Yen</option>
-                                        <option value="AUD">AUD - Australian Dollar</option>
-                                        <option value="CAD">CAD - Canadian Dollar</option>
-                                        <option value="CNY">CNY - Chinese Yuan</option>
-                                        <option value="CHF">CHF - Swiss Franc</option>
-                                        <option value="AED">AED - UAE Dirham</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="to-currency" class="form-label">To:</label>
-                                    <div class="input-group">
-                                        <select id="to-currency" class="form-select">
-                                            <option value="USD" selected>USD - US Dollar</option>
-                                            <option value="INR">INR - Indian Rupee</option>
-                                            <option value="EUR">EUR - Euro</option>
-                                            <option value="GBP">GBP - British Pound</option>
-                                            <option value="JPY">JPY - Japanese Yen</option>
-                                            <option value="AUD">AUD - Australian Dollar</option>
-                                            <option value="CAD">CAD - Canadian Dollar</option>
-                                            <option value="CNY">CNY - Chinese Yuan</option>
-                                            <option value="CHF">CHF - Swiss Franc</option>
-                                            <option value="AED">AED - UAE Dirham</option>
-                                        </select>
-                                        <button class="btn btn-outline-secondary" type="button" id="swap-currencies" aria-label="Swap currencies">
-                                            <i class="fas fa-exchange-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2 mt-3">
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-equals me-2"></i>Convert</button>
-                                <button type="button" class="btn btn-outline-info" id="save-favorite">
-                                    <i class="fas fa-star me-2"></i>Save Favorite Pair
-                                </button>
-                                <select id="favorite-pairs" class="form-select w-auto">
-                                    <option value="">Favorites</option>
+                            <div class="col-lg-4">
+                                <label for="operation" class="form-label">Operation</label>
+                                <select id="operation" class="form-select form-select-custom">
+                                    <optgroup label="Basic Operations">
+                                        <option value="simplify">Simplify</option>
+                                        <option value="expand">Expand Expression</option>
+                                        <option value="factor">Factorize</option>
+                                    </optgroup>
+                                    <optgroup label="Calculus">
+                                        <option value="differentiate">Differentiate</option>
+                                        <option value="partial_derivative">Partial Derivative</option>
+                                        <option value="indefinite_int">Indefinite Integral</option>
+                                        <option value="definite_int">Definite Integral</option>
+                                        <option value="limit">Find Limit</option>
+                                    </optgroup>
+                                    <optgroup label="Equations & Series">
+                                        <option value="solve">Solve Equation</option>
+                                        <option value="roots">Find Roots</option>
+                                        <option value="series">Taylor Series</option>
+                                    </optgroup>
+                                    <optgroup label="Trigonometry">
+                                        <option value="trig_simplify">Simplify Trig</option>
+                                        <option value="trig_expand">Expand Trig</option>
+                                    </optgroup>
+                                    <optgroup label="Graphing">
+                                        <option value="plot_2d">Plot 2D Graph</option>
+                                        <option value="plot_3d">Plot 3D Graph</option>
+                                    </optgroup>
                                 </select>
                             </div>
-                        </form>
-                        <div id="currency-result" class="result-box mt-3"></div>
-                        <div id="currency-history" class="mt-3"></div>
-                      </div>
-                    </div>
-                    <div class="recent-calculations">
-                      <h4>Recent Conversions:</h4>
-                      <ul id="recent-list">
-                        <!-- Dynamically populated -->
-                      </ul>
-                    </div>
+                        </div>
 
-                    <!-- Financial Plot Container -->
-                    <div id="financial-plot-container" style="display: none;">
-                        <div id="financial-plot-loading" class="alert alert-info" style="display: none;">Generating plot...</div>
-                        <canvas id="financial-plot-canvas" style="display: none;"></canvas>
-                        <div id="financial-plotly-surface" class="plotly-surface" style="display: none;"></div>
+                        <!-- Variable Selection (for operations that need it) -->
+                        <div id="var-section" class="row mb-3" style="display:none;">
+                            <div class="col-lg-4">
+                                <label for="var" class="form-label">Variable</label>
+                                <select id="var" class="form-select form-select-custom">
+                                    <option value="x">x</option>
+                                    <option value="y">y</option>
+                                    <option value="z">z</option>
+                                    <option value="t">t</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Limits Section (for definite integral) -->
+                        <div id="limits-section" class="row mb-3" style="display:none;">
+                            <div class="col-lg-4">
+                                <label for="lower-limit" class="form-label">Lower Limit</label>
+                                <input type="text" id="lower-limit" class="form-control form-control-custom" 
+                                       placeholder="e.g., 0">
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="upper-limit" class="form-label">Upper Limit</label>
+                                <input type="text" id="upper-limit" class="form-control form-control-custom" 
+                                       placeholder="e.g., 1">
+                            </div>
+                        </div>
+
+                        <!-- Plot Settings (for 2D and 3D plots) -->
+                        <div id="plot-section" class="row mb-3" style="display:none;">
+                            <div class="col-lg-2">
+                                <label for="x-min" class="form-label">X Min</label>
+                                <input type="number" id="x-min" class="form-control form-control-custom" value="-10">
+                            </div>
+                            <div class="col-lg-2">
+                                <label for="x-max" class="form-label">X Max</label>
+                                <input type="number" id="x-max" class="form-control form-control-custom" value="10">
+                            </div>
+                            <div class="col-lg-2">
+                                <label for="points" class="form-label">Points</label>
+                                <input type="number" id="points" class="form-control form-control-custom" value="200">
+                            </div>
+                            <div id="y-section" class="col-lg-2" style="display:none;">
+                                <label for="y-min" class="form-label">Y Min</label>
+                                <input type="number" id="y-min" class="form-control form-control-custom" value="-10">
+                            </div>
+                            <div id="y-section-max" class="col-lg-2" style="display:none;">
+                                <label for="y-max" class="form-label">Y Max</label>
+                                <input type="number" id="y-max" class="form-control form-control-custom" value="10">
+                            </div>
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <div class="mb-3">
+                            <button id="calc-btn" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play me-2"></i>Calculate
+                            </button>
+                        </div>
+
+                        <!-- Results -->
+                        <div id="result" class="mt-3"></div>
                     </div>
                 </div>
-            </main>
-        </div>
+
+                <!-- Financial Calculators Section -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header bg-success-custom">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-dollar-sign me-2"></i>Financial Calculators
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs tab-custom mb-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="si-tab" data-bs-toggle="tab" data-bs-target="#si">
+                                    <i class="fas fa-percent me-2"></i>Simple Interest
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="ci-tab" data-bs-toggle="tab" data-bs-target="#ci">
+                                    <i class="fas fa-chart-pie me-2"></i>Compound Interest
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="cc-tab" data-bs-toggle="tab" data-bs-target="#cc">
+                                    <i class="fas fa-exchange-alt me-2"></i>Currency Converter
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="emi-tab" data-bs-toggle="tab" data-bs-target="#emi">
+                                    <i class="fas fa-home me-2"></i>EMI Calculator
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Simple Interest -->
+                            <div id="si" class="tab-pane fade show active">
+                                <div class="row mb-3">
+                                    <div class="col-lg-3">
+                                        <label for="si-principal" class="form-label">Principal (₹)</label>
+                                        <input type="number" id="si-principal" class="form-control form-control-custom" placeholder="1000">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="si-rate" class="form-label">Rate (%)</label>
+                                        <input type="number" id="si-rate" class="form-control form-control-custom" placeholder="5">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="si-time" class="form-label">Time (Years)</label>
+                                        <input type="number" id="si-time" class="form-control form-control-custom" placeholder="2">
+                                    </div>
+                                    <div class="col-lg-3 d-flex align-items-end">
+                                        <button id="si-btn" class="btn btn-success w-100">Calculate</button>
+                                    </div>
+                                </div>
+                                <div id="si-result"></div>
+                                <div class="mt-4" id="si-chart-container" style="max-width: 400px; margin: auto;">
+                                    <canvas id="si-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Compound Interest -->
+                            <div id="ci" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-3">
+                                        <label for="ci-principal" class="form-label">Principal (₹)</label>
+                                        <input type="number" id="ci-principal" class="form-control form-control-custom" placeholder="1000">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="ci-rate" class="form-label">Rate (%)</label>
+                                        <input type="number" id="ci-rate" class="form-control form-control-custom" placeholder="5">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="ci-time" class="form-label">Time (Years)</label>
+                                        <input type="number" id="ci-time" class="form-control form-control-custom" placeholder="2">
+                                    </div>
+                                    <div class="col-lg-3 d-flex align-items-end">
+                                        <button id="ci-btn" class="btn btn-success w-100">Calculate</button>
+                                    </div>
+                                </div>
+                                <div id="ci-result"></div>
+                                <div class="mt-4" id="ci-chart-container" style="max-width: 400px; margin: auto;">
+                                    <canvas id="ci-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Currency Converter -->
+                            <div id="cc" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-3">
+                                        <label for="cc-amount" class="form-label">Amount</label>
+                                        <input type="number" id="cc-amount" class="form-control form-control-custom" placeholder="100">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="cc-from" class="form-label">From</label>
+                                        <select id="cc-from" class="form-select form-select-custom">
+                                            <option value="USD">USD</option>
+                                            <option value="INR">INR</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="GBP">GBP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="cc-to" class="form-label">To</label>
+                                        <select id="cc-to" class="form-select form-select-custom">
+                                            <option value="INR">INR</option>
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="GBP">GBP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-3 d-flex align-items-end">
+                                        <button id="cc-btn" class="btn btn-success w-100">Convert</button>
+                                    </div>
+                                </div>
+                                <div id="cc-result"></div>
+                            </div>
+
+                            <!-- EMI Calculator -->
+                            <div id="emi" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-3">
+                                        <label for="emi-principal" class="form-label">Loan Amount (₹)</label>
+                                        <input type="number" id="emi-principal" class="form-control form-control-custom" placeholder="500000">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="emi-rate" class="form-label">Annual Rate (%)</label>
+                                        <input type="number" id="emi-rate" class="form-control form-control-custom" placeholder="8.5" step="0.01">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="emi-months" class="form-label">Tenure (Months)</label>
+                                        <input type="number" id="emi-months" class="form-control form-control-custom" placeholder="60">
+                                    </div>
+                                    <div class="col-lg-3 d-flex align-items-end">
+                                        <button id="emi-btn" class="btn btn-success w-100">Calculate</button>
+                                    </div>
+                                </div>
+                                <div id="emi-result"></div>
+                                <div class="mt-4" id="emi-chart-container" style="max-width: 400px; margin: auto;">
+                                    <canvas id="emi-chart"></canvas>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Units Converter Section -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header" style="background-color: rgba(139, 92, 246, 0.2) !important;">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-ruler-combined me-2"></i>Units Converter (Worldwide)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs tab-custom mb-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="length-tab" data-bs-toggle="tab" data-bs-target="#length">
+                                    <i class="fas fa-arrows-alt-h me-2"></i>Length
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="weight-tab" data-bs-toggle="tab" data-bs-target="#weight">
+                                    <i class="fas fa-weight me-2"></i>Weight
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="temp-tab" data-bs-toggle="tab" data-bs-target="#temp">
+                                    <i class="fas fa-thermometer-half me-2"></i>Temperature
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="volume-tab" data-bs-toggle="tab" data-bs-target="#volume">
+                                    <i class="fas fa-cube me-2"></i>Volume
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="speed-tab" data-bs-toggle="tab" data-bs-target="#speed">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Speed
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="energy-tab" data-bs-toggle="tab" data-bs-target="#energy">
+                                    <i class="fas fa-bolt me-2"></i>Energy
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="area-tab" data-bs-toggle="tab" data-bs-target="#area">
+                                    <i class="fas fa-square me-2"></i>Area
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="time-tab" data-bs-toggle="tab" data-bs-target="#time">
+                                    <i class="fas fa-clock me-2"></i>Time
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data">
+                                    <i class="fas fa-database me-2"></i>Data Storage
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="angle-tab" data-bs-toggle="tab" data-bs-target="#angle">
+                                    <i class="fas fa-compass me-2"></i>Angle
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="pressure-tab" data-bs-toggle="tab" data-bs-target="#pressure">
+                                    <i class="fas fa-gauge me-2"></i>Pressure
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="density-tab" data-bs-toggle="tab" data-bs-target="#density">
+                                    <i class="fas fa-droplet me-2"></i>Density
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="frequency-tab" data-bs-toggle="tab" data-bs-target="#frequency">
+                                    <i class="fas fa-wave-square me-2"></i>Frequency
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Length -->
+                            <div id="length" class="tab-pane fade show active">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="len-value" class="form-label">Value</label>
+                                        <input type="number" id="len-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="len-from" class="form-label">From</label>
+                                        <select id="len-from" class="form-select form-select-custom">
+                                            <option value="m">Meter (m)</option>
+                                            <option value="km">Kilometer (km)</option>
+                                            <option value="cm">Centimeter (cm)</option>
+                                            <option value="mm">Millimeter (mm)</option>
+                                            <option value="ft">Foot (ft)</option>
+                                            <option value="inch">Inch (in)</option>
+                                            <option value="yard">Yard (yd)</option>
+                                            <option value="mile">Mile (mi)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="len-to" class="form-label">To</label>
+                                        <select id="len-to" class="form-select form-select-custom">
+                                            <option value="m">Meter (m)</option>
+                                            <option value="km">Kilometer (km)</option>
+                                            <option value="cm">Centimeter (cm)</option>
+                                            <option value="mm">Millimeter (mm)</option>
+                                            <option value="ft">Foot (ft)</option>
+                                            <option value="inch">Inch (in)</option>
+                                            <option value="yard">Yard (yd)</option>
+                                            <option value="mile">Mile (mi)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertLength()">Convert</button>
+                                <div id="len-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Weight -->
+                            <div id="weight" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="wt-value" class="form-label">Value</label>
+                                        <input type="number" id="wt-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="wt-from" class="form-label">From</label>
+                                        <select id="wt-from" class="form-select form-select-custom">
+                                            <option value="kg">Kilogram (kg)</option>
+                                            <option value="g">Gram (g)</option>
+                                            <option value="mg">Milligram (mg)</option>
+                                            <option value="lb">Pound (lb)</option>
+                                            <option value="oz">Ounce (oz)</option>
+                                            <option value="ton">Metric Ton (t)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="wt-to" class="form-label">To</label>
+                                        <select id="wt-to" class="form-select form-select-custom">
+                                            <option value="kg">Kilogram (kg)</option>
+                                            <option value="g">Gram (g)</option>
+                                            <option value="mg">Milligram (mg)</option>
+                                            <option value="lb">Pound (lb)</option>
+                                            <option value="oz">Ounce (oz)</option>
+                                            <option value="ton">Metric Ton (t)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertWeight()">Convert</button>
+                                <div id="wt-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Temperature -->
+                            <div id="temp" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="temp-value" class="form-label">Value</label>
+                                        <input type="number" id="temp-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="temp-from" class="form-label">From</label>
+                                        <select id="temp-from" class="form-select form-select-custom">
+                                            <option value="C">Celsius (°C)</option>
+                                            <option value="F">Fahrenheit (°F)</option>
+                                            <option value="K">Kelvin (K)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="temp-to" class="form-label">To</label>
+                                        <select id="temp-to" class="form-select form-select-custom">
+                                            <option value="C">Celsius (°C)</option>
+                                            <option value="F">Fahrenheit (°F)</option>
+                                            <option value="K">Kelvin (K)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertTemperature()">Convert</button>
+                                <div id="temp-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Volume -->
+                            <div id="volume" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="vol-value" class="form-label">Value</label>
+                                        <input type="number" id="vol-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="vol-from" class="form-label">From</label>
+                                        <select id="vol-from" class="form-select form-select-custom">
+                                            <option value="L">Liter (L)</option>
+                                            <option value="ml">Milliliter (ml)</option>
+                                            <option value="gallon">Gallon (US)</option>
+                                            <option value="m3">Cubic Meter (m³)</option>
+                                            <option value="cm3">Cubic Centimeter (cm³)</option>
+                                            <option value="pint">Pint (US)</option>
+                                            <option value="cup">Cup (US)</option>
+                                            <option value="fl-oz">Fluid Ounce (fl oz)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="vol-to" class="form-label">To</label>
+                                        <select id="vol-to" class="form-select form-select-custom">
+                                            <option value="L">Liter (L)</option>
+                                            <option value="ml">Milliliter (ml)</option>
+                                            <option value="gallon">Gallon (US)</option>
+                                            <option value="m3">Cubic Meter (m³)</option>
+                                            <option value="cm3">Cubic Centimeter (cm³)</option>
+                                            <option value="pint">Pint (US)</option>
+                                            <option value="cup">Cup (US)</option>
+                                            <option value="fl-oz">Fluid Ounce (fl oz)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertVolume()">Convert</button>
+                                <div id="vol-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Speed -->
+                            <div id="speed" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="spd-value" class="form-label">Value</label>
+                                        <input type="number" id="spd-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="spd-from" class="form-label">From</label>
+                                        <select id="spd-from" class="form-select form-select-custom">
+                                            <option value="ms">Meter/Second (m/s)</option>
+                                            <option value="kmh">Kilometer/Hour (km/h)</option>
+                                            <option value="mph">Mile/Hour (mph)</option>
+                                            <option value="knot">Knot (kn)</option>
+                                            <option value="fps">Foot/Second (ft/s)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="spd-to" class="form-label">To</label>
+                                        <select id="spd-to" class="form-select form-select-custom">
+                                            <option value="ms">Meter/Second (m/s)</option>
+                                            <option value="kmh">Kilometer/Hour (km/h)</option>
+                                            <option value="mph">Mile/Hour (mph)</option>
+                                            <option value="knot">Knot (kn)</option>
+                                            <option value="fps">Foot/Second (ft/s)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertSpeed()">Convert</button>
+                                <div id="spd-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Energy -->
+                            <div id="energy" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="eng-value" class="form-label">Value</label>
+                                        <input type="number" id="eng-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="eng-from" class="form-label">From</label>
+                                        <select id="eng-from" class="form-select form-select-custom">
+                                            <option value="J">Joule (J)</option>
+                                            <option value="kJ">Kilojoule (kJ)</option>
+                                            <option value="cal">Calorie (cal)</option>
+                                            <option value="kcal">Kilocalorie (kcal)</option>
+                                            <option value="Wh">Watt-hour (Wh)</option>
+                                            <option value="kWh">Kilowatt-hour (kWh)</option>
+                                            <option value="eV">Electron Volt (eV)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="eng-to" class="form-label">To</label>
+                                        <select id="eng-to" class="form-select form-select-custom">
+                                            <option value="J">Joule (J)</option>
+                                            <option value="kJ">Kilojoule (kJ)</option>
+                                            <option value="cal">Calorie (cal)</option>
+                                            <option value="kcal">Kilocalorie (kcal)</option>
+                                            <option value="Wh">Watt-hour (Wh)</option>
+                                            <option value="kWh">Kilowatt-hour (kWh)</option>
+                                            <option value="eV">Electron Volt (eV)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertEnergy()">Convert</button>
+                                <div id="eng-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Area -->
+                            <div id="area" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="area-value" class="form-label">Value</label>
+                                        <input type="number" id="area-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="area-from" class="form-label">From</label>
+                                        <select id="area-from" class="form-select form-select-custom">
+                                            <option value="m2">Square Meter (m²)</option>
+                                            <option value="km2">Square Kilometer (km²)</option>
+                                            <option value="cm2">Square Centimeter (cm²)</option>
+                                            <option value="ft2">Square Foot (ft²)</option>
+                                            <option value="in2">Square Inch (in²)</option>
+                                            <option value="mi2">Square Mile (mi²)</option>
+                                            <option value="yd2">Square Yard (yd²)</option>
+                                            <option value="ha">Hectare (ha)</option>
+                                            <option value="acre">Acre</option>
+                                            <option value="bigha">Bigha</option>
+                                            <option value="decimal">Decimal</option>
+                                            <option value="are">Are (a)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="area-to" class="form-label">To</label>
+                                        <select id="area-to" class="form-select form-select-custom">
+                                            <option value="m2">Square Meter (m²)</option>
+                                            <option value="km2">Square Kilometer (km²)</option>
+                                            <option value="cm2">Square Centimeter (cm²)</option>
+                                            <option value="ft2">Square Foot (ft²)</option>
+                                            <option value="in2">Square Inch (in²)</option>
+                                            <option value="mi2">Square Mile (mi²)</option>
+                                            <option value="yd2">Square Yard (yd²)</option>
+                                            <option value="ha">Hectare (ha)</option>
+                                            <option value="acre">Acre</option>
+                                            <option value="bigha">Bigha</option>
+                                            <option value="decimal">Decimal</option>
+                                            <option value="are">Are (a)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertArea()">Convert</button>
+                                <div id="area-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Time -->
+                            <div id="time" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="time-value" class="form-label">Value</label>
+                                        <input type="number" id="time-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="time-from" class="form-label">From</label>
+                                        <select id="time-from" class="form-select form-select-custom">
+                                            <option value="s">Second (s)</option>
+                                            <option value="min">Minute (min)</option>
+                                            <option value="h">Hour (h)</option>
+                                            <option value="day">Day</option>
+                                            <option value="week">Week</option>
+                                            <option value="month">Month</option>
+                                            <option value="year">Year</option>
+                                            <option value="ms">Millisecond (ms)</option>
+                                            <option value="us">Microsecond (μs)</option>
+                                            <option value="ns">Nanosecond (ns)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="time-to" class="form-label">To</label>
+                                        <select id="time-to" class="form-select form-select-custom">
+                                            <option value="s">Second (s)</option>
+                                            <option value="min">Minute (min)</option>
+                                            <option value="h">Hour (h)</option>
+                                            <option value="day">Day</option>
+                                            <option value="week">Week</option>
+                                            <option value="month">Month</option>
+                                            <option value="year">Year</option>
+                                            <option value="ms">Millisecond (ms)</option>
+                                            <option value="us">Microsecond (μs)</option>
+                                            <option value="ns">Nanosecond (ns)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertTime()">Convert</button>
+                                <div id="time-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Data Storage -->
+                            <div id="data" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="data-value" class="form-label">Value</label>
+                                        <input type="number" id="data-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="data-from" class="form-label">From</label>
+                                        <select id="data-from" class="form-select form-select-custom">
+                                            <option value="b">Byte (B)</option>
+                                            <option value="kb">Kilobyte (KB)</option>
+                                            <option value="mb">Megabyte (MB)</option>
+                                            <option value="gb">Gigabyte (GB)</option>
+                                            <option value="tb">Terabyte (TB)</option>
+                                            <option value="pb">Petabyte (PB)</option>
+                                            <option value="bit">Bit</option>
+                                            <option value="kib">Kibibyte (KiB)</option>
+                                            <option value="mib">Mebibyte (MiB)</option>
+                                            <option value="gib">Gibibyte (GiB)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="data-to" class="form-label">To</label>
+                                        <select id="data-to" class="form-select form-select-custom">
+                                            <option value="b">Byte (B)</option>
+                                            <option value="kb">Kilobyte (KB)</option>
+                                            <option value="mb">Megabyte (MB)</option>
+                                            <option value="gb">Gigabyte (GB)</option>
+                                            <option value="tb">Terabyte (TB)</option>
+                                            <option value="pb">Petabyte (PB)</option>
+                                            <option value="bit">Bit</option>
+                                            <option value="kib">Kibibyte (KiB)</option>
+                                            <option value="mib">Mebibyte (MiB)</option>
+                                            <option value="gib">Gibibyte (GiB)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertData()">Convert</button>
+                                <div id="data-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Angle -->
+                            <div id="angle" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="angle-value" class="form-label">Value</label>
+                                        <input type="number" id="angle-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="angle-from" class="form-label">From</label>
+                                        <select id="angle-from" class="form-select form-select-custom">
+                                            <option value="deg">Degree (°)</option>
+                                            <option value="rad">Radian (rad)</option>
+                                            <option value="grad">Gradian (gon)</option>
+                                            <option value="arcmin">Arc Minute (')</option>
+                                            <option value="arcsec">Arc Second ('')</option>
+                                            <option value="rev">Revolution (rev)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="angle-to" class="form-label">To</label>
+                                        <select id="angle-to" class="form-select form-select-custom">
+                                            <option value="deg">Degree (°)</option>
+                                            <option value="rad">Radian (rad)</option>
+                                            <option value="grad">Gradian (gon)</option>
+                                            <option value="arcmin">Arc Minute (')</option>
+                                            <option value="arcsec">Arc Second ('')</option>
+                                            <option value="rev">Revolution (rev)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertAngle()">Convert</button>
+                                <div id="angle-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Pressure -->
+                            <div id="pressure" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="pressure-value" class="form-label">Value</label>
+                                        <input type="number" id="pressure-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="pressure-from" class="form-label">From</label>
+                                        <select id="pressure-from" class="form-select form-select-custom">
+                                            <option value="pa">Pascal (Pa)</option>
+                                            <option value="kpa">Kilopascal (kPa)</option>
+                                            <option value="bar">Bar</option>
+                                            <option value="psi">PSI (psi)</option>
+                                            <option value="atm">Atmosphere (atm)</option>
+                                            <option value="torr">Torr</option>
+                                            <option value="mmhg">Millimeter of Mercury (mmHg)</option>
+                                            <option value="mbar">Millibar (mbar)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="pressure-to" class="form-label">To</label>
+                                        <select id="pressure-to" class="form-select form-select-custom">
+                                            <option value="pa">Pascal (Pa)</option>
+                                            <option value="kpa">Kilopascal (kPa)</option>
+                                            <option value="bar">Bar</option>
+                                            <option value="psi">PSI (psi)</option>
+                                            <option value="atm">Atmosphere (atm)</option>
+                                            <option value="torr">Torr</option>
+                                            <option value="mmhg">Millimeter of Mercury (mmHg)</option>
+                                            <option value="mbar">Millibar (mbar)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertPressure()">Convert</button>
+                                <div id="pressure-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Density -->
+                            <div id="density" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="density-value" class="form-label">Value</label>
+                                        <input type="number" id="density-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="density-from" class="form-label">From</label>
+                                        <select id="density-from" class="form-select form-select-custom">
+                                            <option value="kgm3">kg/m³</option>
+                                            <option value="gcm3">g/cm³</option>
+                                            <option value="lbft3">lb/ft³</option>
+                                            <option value="lbin3">lb/in³</option>
+                                            <option value="glgal">g/L</option>
+                                            <option value="kgl">kg/L</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="density-to" class="form-label">To</label>
+                                        <select id="density-to" class="form-select form-select-custom">
+                                            <option value="kgm3">kg/m³</option>
+                                            <option value="gcm3">g/cm³</option>
+                                            <option value="lbft3">lb/ft³</option>
+                                            <option value="lbin3">lb/in³</option>
+                                            <option value="glgal">g/L</option>
+                                            <option value="kgl">kg/L</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertDensity()">Convert</button>
+                                <div id="density-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Frequency -->
+                            <div id="frequency" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="freq-value" class="form-label">Value</label>
+                                        <input type="number" id="freq-value" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="freq-from" class="form-label">From</label>
+                                        <select id="freq-from" class="form-select form-select-custom">
+                                            <option value="hz">Hertz (Hz)</option>
+                                            <option value="khz">Kilohertz (kHz)</option>
+                                            <option value="mhz">Megahertz (MHz)</option>
+                                            <option value="ghz">Gigahertz (GHz)</option>
+                                            <option value="rpm">RPM</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="freq-to" class="form-label">To</label>
+                                        <select id="freq-to" class="form-select form-select-custom">
+                                            <option value="hz">Hertz (Hz)</option>
+                                            <option value="khz">Kilohertz (kHz)</option>
+                                            <option value="mhz">Megahertz (MHz)</option>
+                                            <option value="ghz">Gigahertz (GHz)</option>
+                                            <option value="rpm">RPM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="convertFrequency()">Convert</button>
+                                <div id="freq-result" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health & Fitness Calculators -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header" style="background-color: rgba(34, 197, 94, 0.2) !important;">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-heartbeat me-2"></i>Health & Fitness Calculators
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs tab-custom mb-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="bmi-tab" data-bs-toggle="tab" data-bs-target="#bmi">
+                                    <i class="fas fa-balance-scale me-2"></i>BMI
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="bmr-tab" data-bs-toggle="tab" data-bs-target="#bmr">
+                                    <i class="fas fa-fire me-2"></i>BMR/TDEE
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="calorie-tab" data-bs-toggle="tab" data-bs-target="#calorie">
+                                    <i class="fas fa-utensils me-2"></i>Calorie Counter
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- BMI Calculator -->
+                            <div id="bmi" class="tab-pane fade show active">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="bmi-weight" class="form-label">Weight (kg)</label>
+                                        <input type="number" id="bmi-weight" class="form-control form-control-custom" placeholder="Enter weight">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="bmi-height" class="form-label">Height (cm)</label>
+                                        <input type="number" id="bmi-height" class="form-control form-control-custom" placeholder="Enter height">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="bmi-unit" class="form-label">Unit</label>
+                                        <select id="bmi-unit" class="form-select form-select-custom">
+                                            <option value="metric">Metric (kg/cm)</option>
+                                            <option value="imperial">Imperial (lb/in)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-success" onclick="calculateBMI()">Calculate BMI</button>
+                                <div id="bmi-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- BMR/TDEE Calculator -->
+                            <div id="bmr" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-3">
+                                        <label for="bmr-age" class="form-label">Age (years)</label>
+                                        <input type="number" id="bmr-age" class="form-control form-control-custom" placeholder="Age">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="bmr-weight" class="form-label">Weight (kg)</label>
+                                        <input type="number" id="bmr-weight" class="form-control form-control-custom" placeholder="Weight">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="bmr-height" class="form-label">Height (cm)</label>
+                                        <input type="number" id="bmr-height" class="form-control form-control-custom" placeholder="Height">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="bmr-gender" class="form-label">Gender</label>
+                                        <select id="bmr-gender" class="form-select form-select-custom">
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="tdee-activity" class="form-label">Activity Level</label>
+                                        <select id="tdee-activity" class="form-select form-select-custom">
+                                            <option value="1.2">Sedentary (little exercise)</option>
+                                            <option value="1.375">Lightly Active (1-3 days/week)</option>
+                                            <option value="1.55">Moderately Active (3-5 days/week)</option>
+                                            <option value="1.725">Very Active (6-7 days/week)</option>
+                                            <option value="1.9">Extremely Active (physical job)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-success" onclick="calculateBMR()">Calculate BMR & TDEE</button>
+                                <div id="bmr-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Calorie Counter -->
+                            <div id="calorie" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-6">
+                                        <label for="food-select" class="form-label">Select Food Item</label>
+                                        <select id="food-select" class="form-select form-select-custom">
+                                            <option value="0">-- Select Food --</option>
+                                            <option value="rice">Rice (100g) - 130 cal</option>
+                                            <option value="bread">Bread (1 slice) - 79 cal</option>
+                                            <option value="chicken">Chicken (100g) - 165 cal</option>
+                                            <option value="fish">Fish (100g) - 82 cal</option>
+                                            <option value="egg">Egg (1 large) - 155 cal</option>
+                                            <option value="apple">Apple (1 medium) - 95 cal</option>
+                                            <option value="banana">Banana (1 medium) - 105 cal</option>
+                                            <option value="milk">Milk (200ml) - 61 cal</option>
+                                            <option value="yogurt">Yogurt (100g) - 59 cal</option>
+                                            <option value="carrot">Carrot (1 medium) - 25 cal</option>
+                                            <option value="broccoli">Broccoli (100g) - 34 cal</option>
+                                            <option value="pizza">Pizza (1 slice) - 285 cal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label for="food-quantity" class="form-label">Quantity (servings)</label>
+                                        <input type="number" id="food-quantity" class="form-control form-control-custom" placeholder="Enter quantity" value="1" min="0.1" step="0.1">
+                                    </div>
+                                </div>
+                                <button class="btn btn-success" onclick="addCalorie()">Add to Total</button>
+                                <div id="calorie-total" class="mt-3">
+                                    <p class="text-white">Total Calories: <strong id="total-cal">0</strong> cal</p>
+                                </div>
+                                <div id="calorie-list" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business & Financial Tools -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header" style="background-color: rgba(245, 158, 11, 0.2) !important;">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-chart-pie me-2"></i>Business & Financial Tools
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs tab-custom mb-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="percent-tab" data-bs-toggle="tab" data-bs-target="#percent">
+                                    <i class="fas fa-percent me-2"></i>Percentage
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="gst-tab" data-bs-toggle="tab" data-bs-target="#gst">
+                                    <i class="fas fa-receipt me-2"></i>GST Calculator
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="profit-tab" data-bs-toggle="tab" data-bs-target="#profit">
+                                    <i class="fas fa-chart-line me-2"></i>Profit Margin
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="discount-tab" data-bs-toggle="tab" data-bs-target="#discount">
+                                    <i class="fas fa-tag me-2"></i>Discount Calculator
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="loan-tab" data-bs-toggle="tab" data-bs-target="#loan">
+                                    <i class="fas fa-home me-2"></i>Home Loan
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Percentage -->
+                            <div id="percent" class="tab-pane fade show active">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="percent-type" class="form-label">Calculate</label>
+                                        <select id="percent-type" class="form-select form-select-custom">
+                                            <option value="percent">Percentage of Number</option>
+                                            <option value="increase">Percentage Increase</option>
+                                            <option value="decrease">Percentage Decrease</option>
+                                            <option value="what">What % is X of Y</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="percent-val1" class="form-label">Value 1</label>
+                                        <input type="number" id="percent-val1" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="percent-val2" class="form-label">Value 2</label>
+                                        <input type="number" id="percent-val2" class="form-control form-control-custom" placeholder="Enter value">
+                                    </div>
+                                </div>
+                                <button class="btn btn-warning" onclick="calculatePercent()">Calculate</button>
+                                <div id="percent-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- GST -->
+                            <div id="gst" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-6">
+                                        <label for="gst-amount" class="form-label">Amount (₹)</label>
+                                        <input type="number" id="gst-amount" class="form-control form-control-custom" placeholder="Enter amount">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label for="gst-rate" class="form-label">GST Rate (%)</label>
+                                        <select id="gst-rate" class="form-select form-select-custom">
+                                            <option value="5">5%</option>
+                                            <option value="12">12%</option>
+                                            <option value="18">18%</option>
+                                            <option value="28">28%</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-warning" onclick="calculateGST()">Calculate</button>
+                                <div id="gst-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Profit Margin -->
+                            <div id="profit" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-6">
+                                        <label for="cost-price" class="form-label">Cost Price (₹)</label>
+                                        <input type="number" id="cost-price" class="form-control form-control-custom" placeholder="Enter cost">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label for="sell-price" class="form-label">Selling Price (₹)</label>
+                                        <input type="number" id="sell-price" class="form-control form-control-custom" placeholder="Enter selling price">
+                                    </div>
+                                </div>
+                                <button class="btn btn-warning" onclick="calculateProfit()">Calculate</button>
+                                <div id="profit-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Discount -->
+                            <div id="discount" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-6">
+                                        <label for="original-price" class="form-label">Original Price (₹)</label>
+                                        <input type="number" id="original-price" class="form-control form-control-custom" placeholder="Enter price">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label for="discount-percent" class="form-label">Discount (%)</label>
+                                        <input type="number" id="discount-percent" class="form-control form-control-custom" placeholder="Enter discount %">
+                                    </div>
+                                </div>
+                                <button class="btn btn-warning" onclick="calculateDiscount()">Calculate</button>
+                                <div id="discount-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Home Loan -->
+                            <div id="loan" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-4">
+                                        <label for="loan-amount" class="form-label">Loan Amount (₹)</label>
+                                        <input type="number" id="loan-amount" class="form-control form-control-custom" placeholder="Enter amount">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="loan-rate" class="form-label">Annual Rate (%)</label>
+                                        <input type="number" id="loan-rate" class="form-control form-control-custom" placeholder="Enter rate" step="0.1">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <label for="loan-tenure" class="form-label">Tenure (months)</label>
+                                        <input type="number" id="loan-tenure" class="form-control form-control-custom" placeholder="Enter months">
+                                    </div>
+                                </div>
+                                <button class="btn btn-warning" onclick="calculateHomeLoan()">Calculate</button>
+                                <div id="loan-result" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Math Tools -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header" style="background-color: rgba(168, 85, 247, 0.2) !important;">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-cube me-2"></i>Mathematics Tools
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs tab-custom mb-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="geometry-tab" data-bs-toggle="tab" data-bs-target="#geometry">
+                                    <i class="fas fa-shapes me-2"></i>Geometry
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats">
+                                    <i class="fas fa-chart-bar me-2"></i>Statistics
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="combo-tab" data-bs-toggle="tab" data-bs-target="#combo">
+                                    <i class="fas fa-dice me-2"></i>Combinatorics
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Geometry -->
+                            <div id="geometry" class="tab-pane fade show active">
+                                <div class="row mb-3">
+                                    <div class="col-lg-6">
+                                        <label for="shape" class="form-label">Select Shape</label>
+                                        <select id="shape" class="form-select form-select-custom">
+                                            <option value="circle">Circle</option>
+                                            <option value="rectangle">Rectangle</option>
+                                            <option value="triangle">Triangle</option>
+                                            <option value="square">Square</option>
+                                            <option value="ellipse">Ellipse</option>
+                                            <option value="trapezoid">Trapezoid</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="geometry-inputs"></div>
+                                <button class="btn btn-purple-custom" onclick="calculateGeometry()">Calculate</button>
+                                <div id="geometry-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Statistics -->
+                            <div id="stats" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-12">
+                                        <label for="numbers" class="form-label">Enter Numbers (comma-separated)</label>
+                                        <textarea id="numbers" class="form-control form-control-custom" placeholder="e.g., 10,20,30,40,50" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <button class="btn btn-purple-custom" onclick="calculateStats()">Calculate</button>
+                                <div id="stats-result" class="mt-3"></div>
+                            </div>
+
+                            <!-- Combinatorics -->
+                            <div id="combo" class="tab-pane fade">
+                                <div class="row mb-3">
+                                    <div class="col-lg-3">
+                                        <label for="combo-n" class="form-label">N</label>
+                                        <input type="number" id="combo-n" class="form-control form-control-custom" placeholder="Total items">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="combo-r" class="form-label">R</label>
+                                        <input type="number" id="combo-r" class="form-control form-control-custom" placeholder="Select items">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label for="combo-type" class="form-label">Type</label>
+                                        <select id="combo-type" class="form-select form-select-custom">
+                                            <option value="perm">Permutation (nPr)</option>
+                                            <option value="comb">Combination (nCr)</option>
+                                            <option value="fact">Factorial (n!)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-purple-custom" onclick="calculateCombo()">Calculate</button>
+                                <div id="combo-result" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                            
+
+        <!-- Footer -->
+        <footer class="footer-custom border-top border-primary mt-5">
+            <div class="container text-center py-3">
+                <p class="text-secondary mb-0">
+                    <small>&copy; 2025 AllRounder Calculator | Created by: <strong>Prahlad Lodhi</strong></small>
+                </p>
+                <div class="mt-2">
+                    <small class="text-secondary">
+                        <i class="fas fa-envelope me-1"></i>
+                        <a href="mailto:lodhiprahlad348@gmail.com" class="text-decoration-none text-secondary">lodhiprahlad348@gmail.com</a> |
+                        <i class="fab fa-github me-1"></i>
+                        <a href="https://github.com/lodhiprahlad-348" target="_blank" class="text-decoration-none text-secondary">lodhiprahlad-348</a> |
+                        <i class="fab fa-github me-1"></i>
+                        <a href="https://github.com/prahladlodhi" target="_blank" class="text-decoration-none text-secondary">prahladlodhi</a> |
+                        <i class="fab fa-linkedin me-1"></i>
+                        <a href="https://linkedin.com/in/prahlad-lodhi" target="_blank" class="text-decoration-none text-secondary">prahlad-lodhi</a>
+                    </small>
+                </div>
+            </div>
+        </footer>
     </div>
 
-    <!-- Bootstrap 5 JS -->
+    {% csrf_token %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery for AJAX -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Chart.js for 2D plotting -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Plotly.js for 3D plotting -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <!-- Custom JS -->
-    <script src="{% static 'js/script.js' %}"></script>
-    <script src="{% static 'js/financial-calc.js' %}"></script>
-    <script src="{% static 'js/currency-converter.js' %}"></script>
-    <script src="{% static 'js/math-keyboard.js' %}"></script>
-
-    <!-- Math Keyboard Container (populated by math-keyboard.js) -->
-    <div id="math-keyboard-container" style="display:none;"></div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="/static/js/app.js"></script>
 </body>
 </html>

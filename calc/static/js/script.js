@@ -20,8 +20,7 @@ const verifyElements = () => {
         'si-calculate-btn',
         'ci-calculate-btn',
         'convert-btn',
-        'keyboard-btn',
-        'plot-graph-btn'
+        'keyboard-btn'
     ];
 
     requiredIds.forEach(id => {
@@ -64,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Execute button handler
     safeAddEventListener('#execute-btn', 'click', async function() {
         const expression = document.getElementById('adv-expression').value.trim();
-        const uiOperation = document.getElementById('operation-select').value;
+        const operation = document.getElementById('operation-select').value;
         const variable = document.getElementById('variable-select').value;
 
         if (!expression) {
@@ -72,80 +71,33 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Show loading state
         const resultContent = document.querySelector('.result-content');
         resultContent.innerHTML = '<div style="color: #50FFFF;">Calculating...</div>';
 
         try {
-            // Map UI operations to backend operation codes
-            const opMap = {
-                evaluate: 'simplify',
-                simplify: 'simplify',
-                differentiate: 'partial_diff',
-                partial_derivative: 'partial_diff',
-                integrate: 'indefinite_int',
-                definite_integral: 'definite_int',
-                solve: 'solve',
-                expand: 'simplify',
-                factor: 'simplify',
-                series: 'simplify',
-                limit: 'simplify'
+            let endpoint = '/api/advanced-calculus/';
+            let payload = {
+                expression: expression,
+                operation: operation,
+                variable: variable
             };
 
-        const isPlot = uiOperation === 'plot_2d' || uiOperation === 'plot_3d';
-
-            if (!isPlot) {
-                const payload = {
-                    expr: expression,
-                    operation: opMap[uiOperation] || 'simplify',
-                    variable: variable
+            // Handle plotting operations
+            if (operation === 'plot_2d' || operation === 'plot_3d') {
+                endpoint = '/api/plot/';
+                payload = {
+                    expression: expression,
+                    x_min: parseFloat(document.getElementById('x-min').value),
+                    x_max: parseFloat(document.getElementById('x-max').value),
+                    y_min: parseFloat(document.getElementById('y-min').value),
+                    y_max: parseFloat(document.getElementById('y-max').value),
+                    x_points: parseInt(document.getElementById('x-points').value),
+                    y_points: parseInt(document.getElementById('y-points').value)
                 };
-
-                const response = await fetch('/api/advanced-calculus/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await response.json();
-
-                if (data.ok) {
-                    resultContent.innerHTML = `<strong>Result:</strong><br>${data.result}`;
-                } else {
-                    resultContent.innerHTML = `<span style="color: #FF6B6B;">Error: ${data.error}</span>`;
-                }
-                return;
             }
 
-            // Frontend variable-count validation for plotting
-            const varMatches = expression.match(/\b[xyzt]\b/g) || [];
-            const uniqueVars = Array.from(new Set(varMatches));
-            if (uiOperation === 'plot_3d' && uniqueVars.length > 2) {
-                resultContent.innerHTML = `
-                    <span style="color:#FF6B6B;">
-                        3D Surface plotting requires at most 2 variables, but found ${uniqueVars.length}:
-                        ${uniqueVars.join(', ')}. Please reduce the expression to 1–2 variables
-                        or choose a different plotting method (e.g., parametric).
-                    </span>
-                `;
-                return;
-            }
-
-            // Plotting via /api/plot/ (2D or 3D)
-            const payload = {
-                expr: expression,
-                xmin: parseFloat(document.getElementById('x-min').value),
-                xmax: parseFloat(document.getElementById('x-max').value),
-                ymin: parseFloat(document.getElementById('y-min').value),
-                ymax: parseFloat(document.getElementById('y-max').value),
-                points: parseInt(document.getElementById('x-points').value),
-                ypoints: parseInt(document.getElementById('y-points').value),
-                source: 'advanced'
-            };
-
-            const response = await fetch('/api/plot/', {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,12 +109,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.ok) {
-                if (data.plot_type === '2d') {
+                if (operation === 'plot_2d') {
                     resultContent.innerHTML = '<div style="color: #50FFFF;">2D Plot generated below</div>';
                     renderChart2D(data.data, expression);
-                } else if (data.plot_type === '3d') {
+                } else if (operation === 'plot_3d') {
                     resultContent.innerHTML = '<div style="color: #50FFFF;">3D Plot generated below</div>';
                     renderPlotly3D(data.data, expression);
+                } else {
+                    resultContent.innerHTML = `<strong>Result:</strong><br>${data.result}`;
                 }
             } else {
                 resultContent.innerHTML = `<span style="color: #FF6B6B;">Error: ${data.error}</span>`;
@@ -190,71 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lineChartInstance) {
             lineChartInstance.destroy();
             lineChartInstance = null;
-        }
-    });
-
-    // Plot Graph button handler (Matplotlib backend)
-    safeAddEventListener('#plot-graph-btn', 'click', async function() {
-        const expressionEl = document.getElementById('adv-expression');
-        const variableEl = document.getElementById('variable-select');
-        const resultContent = document.getElementById('result-content');
-
-        if (!expressionEl || !variableEl || !resultContent) {
-            console.warn('Required elements for plotting not found.');
-            return;
-        }
-
-        const expression = expressionEl.value.trim();
-        const variable = variableEl.value;
-
-        if (!expression) {
-            alert('Please enter an expression to plot.');
-            return;
-        }
-
-        resultContent.innerHTML = '<div style="color:#38bdf8;">Generating graph...</div>';
-
-        const xMin = parseFloat(document.getElementById('x-min')?.value ?? '-10') || -10;
-        const xMax = parseFloat(document.getElementById('x-max')?.value ?? '10') || 10;
-        const numPoints = parseInt(document.getElementById('x-points')?.value ?? '400', 10) || 400;
-
-        try {
-            const response = await fetch('/api/plot-mpl/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    expression: expression,
-                    variable: variable,
-                    x_min: xMin,
-                    x_max: xMax,
-                    num_points: numPoints
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.ok) {
-                const msg = data.error || 'Unable to generate graph.';
-                resultContent.innerHTML = `<span style="color:#FF6B6B;">${msg}</span>`;
-                return;
-            }
-
-            resultContent.innerHTML = `
-                <div style="margin-bottom:0.5rem;color:#e5e7eb;">
-                    Plotted graph for <code>${expression}</code> w.r.t <strong>${variable}</strong>
-                </div>
-                <img
-                    src="data:image/png;base64,${data.image}"
-                    alt="Plot of ${expression}"
-                    style="max-width:100%;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.35);"
-                />
-            `;
-        } catch (error) {
-            console.error('Plot graph error:', error);
-            resultContent.innerHTML = '<span style="color:#FF6B6B;">Unexpected error while plotting.</span>';
         }
     });
 

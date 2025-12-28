@@ -66,20 +66,14 @@ def compound_interest(request):
 @csrf_exempt
 def plot_expression_mpl(request):
     """
-    Plot expressions with 1 or 2 variables using NumPy + Matplotlib and return a base64 PNG.
-
-    Behaviour:
-        - 1 variable  → 2D line plot
-        - 2 variables → 3D surface plot
-        - 3+ variables → helpful error message
+    Plot a single-variable expression using NumPy + Matplotlib and return a base64 PNG.
 
     Expected JSON payload (POST):
         {
-          "expression": "sin(x) * cos(y)",
+          "expression": "sin(x)",
+          "variable": "x",            # one of x, y, z, t
           "x_min": -5,
           "x_max": 5,
-          "y_min": -5,        # optional, used for 2‑var plots
-          "y_max": 5,         # optional, used for 2‑var plots
           "num_points": 400
         }
     """
@@ -104,16 +98,21 @@ def plot_expression_mpl(request):
         return response
 
     expr_str = (payload.get("expression") or "").strip()
+    var_name = (payload.get("variable") or "x").strip()
+
     if not expr_str:
         response = JsonResponse({"ok": False, "error": "No expression provided."}, status=400)
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+
+    if var_name not in ("x", "y", "z", "t"):
+        response = JsonResponse({"ok": False, "error": "Variable must be one of x, y, z, t."}, status=400)
         response["Access-Control-Allow-Origin"] = "*"
         return response
 
     try:
         x_min = float(payload.get("x_min", -10))
         x_max = float(payload.get("x_max", 10))
-        y_min = float(payload.get("y_min", -5))
-        y_max = float(payload.get("y_max", 5))
         num_points = int(payload.get("num_points", 400))
     except (TypeError, ValueError):
         response = JsonResponse({"ok": False, "error": "Invalid range or num_points values."}, status=400)
@@ -133,100 +132,36 @@ def plot_expression_mpl(request):
     try:
         # Safely parse expression using existing sympy helper
         expr = safe_parse(expr_str)
+        var_symbol = sp.symbols(var_name)
 
-        # Detect variables present in the expression
-        free_syms = sorted(list(expr.free_symbols), key=lambda s: s.name)
-        supported_names = {"x", "y", "z", "t"}
-        free_syms = [s for s in free_syms if s.name in supported_names]
-        num_vars = len(free_syms)
+        # Convert sympy expression to a vectorized NumPy function
+        f = sp.lambdify(var_symbol, expr, modules=["numpy"])
 
-        if num_vars == 0:
-            # Constant expression – treat as function of a dummy x
-            var_symbol = sp.symbols("x")
-            f = sp.lambdify(var_symbol, expr, modules=["numpy"])
-            xs = np.linspace(x_min, x_max, num_points)
-            ys = f(xs)
-            ys = np.array(ys, dtype=np.float64)
+        xs = np.linspace(x_min, x_max, num_points)
+        ys = f(xs)
+        ys = np.array(ys, dtype=np.float64)
 
-            plt.style.use("dark_background")
-            fig, ax = plt.subplots(figsize=(6, 4), dpi=120)
-            fig.patch.set_facecolor("#020617")
-            ax.set_facecolor("#020617")
-            ax.plot(xs, ys, color="#38bdf8", linewidth=2.0)
-            ax.set_xlabel("x", color="#e5e7eb")
-            ax.set_ylabel("f(x)", color="#e5e7eb")
-            ax.set_title(expr_str, color="#e5e7eb")
+        # Replace non-finite values with NaN so they don't break the plot
+        ys[~np.isfinite(ys)] = np.nan
 
-        elif num_vars == 1:
-            # Single-variable expression – 2D line plot
-            var_symbol = free_syms[0]
-            f = sp.lambdify(var_symbol, expr, modules=["numpy"])
+        if np.all(np.isnan(ys)):
+            raise ValueError("Expression could not be evaluated on the given range.")
 
-            xs = np.linspace(x_min, x_max, num_points)
-            ys = f(xs)
-            ys = np.array(ys, dtype=np.float64)
-            ys[~np.isfinite(ys)] = np.nan
-            if np.all(np.isnan(ys)):
-                raise ValueError("Expression could not be evaluated on the given range.")
+        # Styling for dark theme
+        plt.style.use("dark_background")
+        fig, ax = plt.subplots(figsize=(6, 4), dpi=120)
+        fig.patch.set_facecolor("#020617")  # dark slate
+        ax.set_facecolor("#020617")
 
-            plt.style.use("dark_background")
-            fig, ax = plt.subplots(figsize=(6, 4), dpi=120)
-            fig.patch.set_facecolor("#020617")
-            ax.set_facecolor("#020617")
-            ax.plot(xs, ys, color="#38bdf8", linewidth=2.0)
-            name = var_symbol.name
-            ax.set_xlabel(name, color="#e5e7eb")
-            ax.set_ylabel(f"f({name})", color="#e5e7eb")
-            ax.set_title(expr_str, color="#e5e7eb")
-
-        elif num_vars == 2:
-            # Two-variable expression – 3D surface
-            from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
-
-            v1, v2 = free_syms[:2]
-            x_vals = np.linspace(x_min, x_max, max(10, min(num_points, 150)))
-            y_vals = np.linspace(y_min, y_max, max(10, min(num_points, 150)))
-            X, Y = np.meshgrid(x_vals, y_vals)
-
-            f = sp.lambdify((v1, v2), expr, modules=["numpy"])
-            Z = f(X, Y)
-            Z = np.array(Z, dtype=np.float64)
-            Z[~np.isfinite(Z)] = np.nan
-            if np.all(np.isnan(Z)):
-                raise ValueError("Expression could not be evaluated on the given 2D range.")
-
-            plt.style.use("dark_background")
-            fig = plt.figure(figsize=(6, 4), dpi=120)
-            ax = fig.add_subplot(111, projection="3d")
-            fig.patch.set_facecolor("#020617")
-            ax.set_facecolor("#020617")
-
-            surf = ax.plot_surface(
-                X,
-                Y,
-                Z,
-                cmap="viridis",
-                linewidth=0,
-                antialiased=True,
-            )
-            fig.colorbar(surf, shrink=0.6, aspect=10)
-            ax.set_xlabel(v1.name, color="#e5e7eb")
-            ax.set_ylabel(v2.name, color="#e5e7eb")
-            ax.set_zlabel("f", color="#e5e7eb")
-            ax.set_title(expr_str, color="#e5e7eb")
-
-        else:
-            # 3 or more variables – explain limitation
-            var_list = ", ".join(s.name for s in free_syms)
-            raise ValueError(
-                f"Expression contains {num_vars} variables ({var_list}). "
-                "Plotting currently supports at most 2 variables. "
-                "Fix the extra variables to constants or reduce the expression."
-            )
+        ax.plot(xs, ys, color="#38bdf8", linewidth=2.0)
+        ax.set_xlabel(var_name, color="#e5e7eb")
+        ax.set_ylabel(f"f({var_name})", color="#e5e7eb")
+        ax.set_title(expr_str, color="#e5e7eb")
 
         ax.grid(True, color="#1f2937", alpha=0.7)
-        for spine in getattr(ax, "spines", {}).values():
+        for spine in ax.spines.values():
             spine.set_color("#334155")
+
         ax.tick_params(colors="#cbd5f5")
         fig.tight_layout()
 
@@ -236,14 +171,7 @@ def plot_expression_mpl(request):
         buffer.seek(0)
         img_b64 = base64.b64encode(buffer.read()).decode("ascii")
 
-        response = JsonResponse(
-            {
-                "ok": True,
-                "image": img_b64,
-                "variables": [s.name for s in free_syms],
-                "variable_count": num_vars,
-            }
-        )
+        response = JsonResponse({"ok": True, "image": img_b64})
         response["Access-Control-Allow-Origin"] = "*"
         response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         response["Access-Control-Allow-Headers"] = "Content-Type"

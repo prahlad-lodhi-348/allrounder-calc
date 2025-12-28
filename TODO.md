@@ -1,14 +1,19 @@
-# Django Calculator UI Refactor - Dark Theme & Currency Converter Styling
+# EMI Calculator Implementation Plan
 
-## Completed Tasks
-- [x] Remove dark mode toggle button from home.html
-- [x] Remove body.light-mode CSS rules from modern-ui.css
-- [x] Remove dark mode JavaScript code from script.js and force dark theme on load
-- [x] Remove light Bootstrap classes from currency converter form
-- [x] Update currency converter history to use same styling as financial calculators
-- [x] Remove light-mode overrides from CSS
+## Overview
+Add an EMI (Equated Monthly Installment) calculator to the financial calculators section with:
+- Standard UI for inputs (Principal, Rate, Time)
+- Calculations for monthly EMI, total interest, total amount paid
+- Pie chart showing principal vs interest breakdown
+- Line chart for amortization schedule (balance over time)
 
-## Testing Required
-- [ ] Test that UI always loads in dark theme (no theme toggle)
-- [ ] Verify Currency Converter inputs/labels/results match Financial Calculators exactly
-- [ ] Check that Recent Conversions list styling matches other result/info boxes
+## Steps
+- [x] Add EMI tab to financial calculators in home.html
+- [x] Add EMI form HTML with inputs for principal, annual rate, loan tenure (months)
+- [x] Add result display area for EMI details
+- [x] Add containers for pie chart and line chart
+- [x] Update financial-calc.js to include EMI calculation logic
+- [x] Implement EMI formula and amortization schedule calculation
+- [x] Add Plotly code for pie chart (principal vs interest)
+- [x] Add Plotly code for line chart (outstanding balance over time)
+- [x] Test the calculator functionality

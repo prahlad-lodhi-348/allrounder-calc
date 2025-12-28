@@ -145,45 +145,7 @@ body {
 .result-box {
     margin-top: 0.5rem;
     font-weight: 600;
-    color: #f9fafb;
-    background-color: #0f172a;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-}
-
-/* Ensure inner Bootstrap alerts inherit readable contrast */
-#si-result .alert,
-#ci-result .alert,
-#currency-result .alert {
-    background-color: transparent;
-    color: inherit;
-    border: 1px solid rgba(148, 163, 184, 0.6);
-}
-
-/* Currency converter result main line: green, bold, larger */
-#currency-result .alert-success h5 {
-    color: #16a34a;
-    font-weight: 700;
-    font-size: 1.3rem;
-}
-
-/* Hide any emergency debug buttons if still injected */
-button[onclick^="testApiEndpoint"],
-button[onclick^="manualExecute"] {
-    display: none !important;
-}
-
-/* Hide any emergency debug buttons if still injected */
-button[onclick^="testApiEndpoint"],
-button[onclick^="manualExecute"] {
-    display: none !important;
-}
-
-/* Currency converter result styling */
-#currency-result .alert-success h5 {
-    color: #16a34a;
-    font-weight: 700;
-    font-size: 1.3rem;
+    color: #198754;
 }
 
 /* Responsive adjustments */

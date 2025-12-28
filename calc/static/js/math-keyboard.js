@@ -1,166 +1,146 @@
-// Math Keyboard Overlay Functionality (production-ready)
-document.addEventListener('DOMContentLoaded', () => {
+// Math Keyboard Overlay Functionality
+const initMathKeyboard = () => {
+    // Check if keyboard container exists
     const keyboardContainer = document.getElementById('math-keyboard-container');
-    const keyboardToggleBtn = document.getElementById('keyboard-btn');
-    const expressionInput = document.getElementById('adv-expression');
-
-    if (!keyboardContainer || !keyboardToggleBtn || !expressionInput) {
-        console.warn('Math keyboard: required elements not found – keyboard disabled');
+    if (!keyboardContainer) {
+        console.warn('Math keyboard container not found - keyboard disabled');
         return;
     }
 
-    keyboardContainer.style.display = 'block';
-    keyboardContainer.innerHTML = `
-        <div id="math-keyboard" class="math-keyboard-overlay" style="display:none;">
-            <div class="math-keyboard-panel">
-                <div class="math-keyboard-header">
-                    <h4>Math Keyboard</h4>
-                    <button type="button" class="math-keyboard-close" id="math-keyboard-close">✕</button>
+    // Create keyboard overlay HTML
+    const keyboardHTML = `
+        <div id="math-keyboard" class="math-keyboard-overlay" style="display: none;">
+            <div class="math-keyboard-header">
+                <h4>Math Keyboard</h4>
+                <button class="keyboard-close-btn" id="keyboard-close-btn">×</button>
+            </div>
+            <div class="math-keyboard-content">
+                <div class="keyboard-row">
+                    <button class="math-key" data-symbol="sin(">(</button>
+                    <button class="math-key" data-symbol="cos(">(</button>
+                    <button class="math-key" data-symbol="tan(">(</button>
+                    <button class="math-key" data-symbol="log(">(</button>
+                    <button class="math-key" data-symbol="ln(">(</button>
+                    <button class="math-key" data-symbol="sqrt(">(</button>
                 </div>
-                <div class="math-keyboard-content">
-                    <div class="keyboard-row">
-                        <button class="math-key" data-symbol="sin(">sin</button>
-                        <button class="math-key" data-symbol="cos(">cos</button>
-                        <button class="math-key" data-symbol="tan(">tan</button>
-                        <button class="math-key" data-symbol="log(">log</button>
-                        <button class="math-key" data-symbol="ln(">ln</button>
-                        <button class="math-key" data-symbol="sqrt(">&#8730;</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button class="math-key" data-symbol="^">^</button>
-                        <button class="math-key" data-symbol="pi">&#960;</button>
-                        <button class="math-key" data-symbol="e">e</button>
-                        <button class="math-key" data-symbol="(">(</button>
-                        <button class="math-key" data-symbol=")">)</button>
-                        <button class="math-key" data-symbol=",">,</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button class="math-key" data-symbol="+">+</button>
-                        <button class="math-key" data-symbol="-">−</button>
-                        <button class="math-key" data-symbol="*">×</button>
-                        <button class="math-key" data-symbol="/">÷</button>
-                        <button class="math-key" data-symbol="=">=</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button class="math-key" data-symbol="x">x</button>
-                        <button class="math-key" data-symbol="y">y</button>
-                        <button class="math-key" data-symbol="z">z</button>
-                        <button class="math-key" data-symbol="t">t</button>
-                    </div>
-                    <div class="keyboard-row keyboard-row-special">
-                        <button class="math-key special" id="keyboard-backspace">⌫</button>
-                        <button class="math-key special" id="keyboard-clear">Clear</button>
-                        <button class="math-key special" id="keyboard-space">Space</button>
-                        <button class="math-key special" id="keyboard-enter">Enter</button>
-                    </div>
+                <div class="keyboard-row">
+                    <button class="math-key" data-symbol="^">^</button>
+                    <button class="math-key" data-symbol="pi">π</button>
+                    <button class="math-key" data-symbol="e">e</button>
+                    <button class="math-key" data-symbol="∞">∞</button>
+                    <button class="math-key" data-symbol="∫">∫</button>
+                    <button class="math-key" data-symbol="∑">∑</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="math-key" data-symbol="(">(</button>
+                    <button class="math-key" data-symbol=")">)</button>
+                    <button class="math-key" data-symbol="[">[</button>
+                    <button class="math-key" data-symbol="]">]</button>
+                    <button class="math-key" data-symbol="{">{</button>
+                    <button class="math-key" data-symbol="}">}</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="math-key" data-symbol="+">+</button>
+                    <button class="math-key" data-symbol="-">-</button>
+                    <button class="math-key" data-symbol="*">*</button>
+                    <button class="math-key" data-symbol="/">/</button>
+                    <button class="math-key" data-symbol="=">=</button>
+                    <button class="math-key" data-symbol=",">,</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="math-key" data-symbol="x">x</button>
+                    <button class="math-key" data-symbol="y">y</button>
+                    <button class="math-key" data-symbol="z">z</button>
+                    <button class="math-key" data-symbol="n">n</button>
+                    <button class="math-key" data-symbol="i">i</button>
+                    <button class="math-key" data-symbol="j">j</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="math-key" data-symbol="α">α</button>
+                    <button class="math-key" data-symbol="β">β</button>
+                    <button class="math-key" data-symbol="γ">γ</button>
+                    <button class="math-key" data-symbol="δ">δ</button>
+                    <button class="math-key" data-symbol="ε">ε</button>
+                    <button class="math-key" data-symbol="θ">θ</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="math-key special" id="keyboard-backspace">⌫</button>
+                    <button class="math-key special" id="keyboard-clear">Clear</button>
+                    <button class="math-key special" id="keyboard-space">Space</button>
+                    <button class="math-key special" id="keyboard-enter">Enter</button>
                 </div>
             </div>
         </div>
     `;
 
-    const overlay = document.getElementById('math-keyboard');
-    const closeBtn = document.getElementById('math-keyboard-close');
+    // Add keyboard to the container
+    keyboardContainer.innerHTML = keyboardHTML;
 
-    if (!overlay || !closeBtn) {
-        console.warn('Math keyboard overlay could not be initialized');
+    // Get references after adding to DOM
+    const keyboard = document.getElementById('math-keyboard');
+    const keyboardBtn = document.getElementById('keyboard-btn');
+    const closeBtn = document.getElementById('keyboard-close-btn');
+    const expressionInput = document.getElementById('adv-expression');
+
+    if (!keyboard || !keyboardBtn || !closeBtn || !expressionInput) {
+        console.error('Required elements for math keyboard not found');
         return;
     }
 
-    const openKeyboard = () => {
-        overlay.style.display = 'flex';
-    };
-
-    const closeKeyboard = () => {
-        overlay.style.display = 'none';
-    };
-
-    keyboardToggleBtn.addEventListener('click', () => {
-        if (overlay.style.display === 'none' || overlay.style.display === '') {
-            openKeyboard();
-        } else {
-            closeKeyboard();
-        }
+    // Toggle keyboard visibility
+    keyboardBtn.addEventListener('click', () => {
+        keyboard.style.display = keyboard.style.display === 'none' ? 'block' : 'none';
     });
 
-    closeBtn.addEventListener('click', closeKeyboard);
-
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            closeKeyboard();
-        }
+    // Close keyboard
+    closeBtn.addEventListener('click', () => {
+        keyboard.style.display = 'none';
     });
 
-    overlay.querySelectorAll('.math-key').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const symbol = btn.getAttribute('data-symbol');
-            if (!symbol || !expressionInput) return;
+    // Add click handler for math keys
+    document.querySelectorAll('.math-key').forEach(key => {
+        key.addEventListener('click', () => {
+            const symbol = key.getAttribute('data-symbol');
+            if (expressionInput) {
+                const start = expressionInput.selectionStart;
+                const end = expressionInput.selectionEnd;
+                const text = expressionInput.value;
+                expressionInput.value = text.substring(0, start) + symbol + text.substring(end);
+                expressionInput.focus();
+                expressionInput.setSelectionRange(start + symbol.length, start + symbol.length);
 
-            const start = expressionInput.selectionStart ?? expressionInput.value.length;
-            const end = expressionInput.selectionEnd ?? expressionInput.value.length;
-            const value = expressionInput.value;
-
-            expressionInput.value = value.slice(0, start) + symbol + value.slice(end);
-            const caret = start + symbol.length;
-            expressionInput.focus();
-            expressionInput.setSelectionRange(caret, caret);
+                // Trigger input event for any listeners
+                const event = new Event('input', { bubbles: true });
+                expressionInput.dispatchEvent(event);
+            }
         });
     });
 
+    // Add special key handlers
     const backspaceBtn = document.getElementById('keyboard-backspace');
     const clearBtn = document.getElementById('keyboard-clear');
     const spaceBtn = document.getElementById('keyboard-space');
     const enterBtn = document.getElementById('keyboard-enter');
 
+    // Backspace button handler
     if (backspaceBtn) {
-        backspaceBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!expressionInput) return;
-            const start = expressionInput.selectionStart ?? expressionInput.value.length;
-            const end = expressionInput.selectionEnd ?? expressionInput.value.length;
-            const value = expressionInput.value;
+        backspaceBtn.addEventListener('click', () => {
+            if (expressionInput) {
+                const start = expressionInput.selectionStart;
+                const end = expressionInput.selectionEnd;
+                const text = expressionInput.value;
 
-            if (start === end && start > 0) {
-                expressionInput.value = value.slice(0, start - 1) + value.slice(end);
-                const caret = start - 1;
-                expressionInput.setSelectionRange(caret, caret);
-            } else if (start !== end) {
-                expressionInput.value = value.slice(0, start) + value.slice(end);
-                expressionInput.setSelectionRange(start, start);
-            }
-            expressionInput.focus();
-        });
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!expressionInput) return;
-            expressionInput.value = '';
-            expressionInput.focus();
-        });
-    }
-
-    if (spaceBtn) {
-        spaceBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!expressionInput) return;
-            const start = expressionInput.selectionStart ?? expressionInput.value.length;
-            const end = expressionInput.selectionEnd ?? expressionInput.value.length;
-            const value = expressionInput.value;
-            expressionInput.value = value.slice(0, start) + ' ' + value.slice(end);
-            const caret = start + 1;
-            expressionInput.setSelectionRange(caret, caret);
-            expressionInput.focus();
-        });
-    }
-
-    if (enterBtn) {
-        enterBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const executeBtn = document.getElementById('execute-btn');
-            if (executeBtn) {
-                executeBtn.click();
-            }
-        });
-    }
+                if (start === end && start > 0) {
+                    // Delete one character before cursor
+                    expressionInput.value = text.substring(0, start - 1) + text.substring(end);
+                    expressionInput.setSelectionRange(start - 1, start - 1);
+                } else if (start !== end) {
+                    // Delete selected text
+                    expressionInput.value = text.substring(0, start) + text.substring(end);
+                    expressionInput.setSelectionRange(start, start);
+                }
+            });
+        }
+    }, 20);
 });
+

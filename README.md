@@ -2,6 +2,8 @@
 
 A Mathway-style web app built with Django, SymPy, and Plotly. It evaluates mathematical expressions, shows symbolic steps, and renders interactive graphs.
 
+**Created by: Prahlad Lodhi**
+
 ## Features
 
 - Expression input with symbolic math evaluation

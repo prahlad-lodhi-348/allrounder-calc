@@ -124,22 +124,6 @@ class PlotApiView(View):
             free_symbols = [Symbol('x')]
             num_vars = 1
 
-        if num_vars > 2:
-            names = ", ".join(str(s) for s in free_symbols)
-            return JsonResponse(
-                {
-                    "ok": False,
-                    "error": (
-                        f"3D surface plotting supports at most 2 variables, "
-                        f"but found {num_vars}: {names}. "
-                        "Try reducing the expression to 1–2 variables, or use a parametric/other plot type."
-                    ),
-                    "variable_count": num_vars,
-                    "variables": names,
-                },
-                status=400,
-            )
-
         if num_vars == 1:
             var = free_symbols[0]
             try:
