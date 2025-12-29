@@ -2,21 +2,6 @@ services:
   - type: web
     name: allrounder-calc
     env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn allrounder_calc.wsgi
-    envVars:
-      - key: DJANGO_SECRET_KEY
-        fromDatabase: false
-        value: 'replace-this-with-a-secure-secret-key'
-      - key: DJANGO_DEBUG
-        fromDatabase: false
-        value: 'False'
-# render.yaml
-services:
-  - type: web
-    name: allrounder-calc
-    env: python
     region: oregon
     plan: free
     branch: main
@@ -24,10 +9,10 @@ services:
     startCommand: gunicorn allrounder_calc.wsgi:application
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: SECRET_KEY
+        value: "3.11"
+      - key: DJANGO_SECRET_KEY
         generateValue: true
-      - key: DEBUG
-        value: False
+      - key: DJANGO_DEBUG
+        value: "False"
       - key: ALLOWED_HOSTS
         value: .onrender.com

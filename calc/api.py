@@ -3,9 +3,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator as method_decorator_class
-from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta

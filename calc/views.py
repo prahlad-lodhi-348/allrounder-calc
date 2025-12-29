@@ -1,488 +1,270 @@
-import base64
-import io
 import json
-from datetime import datetime
-import traceback
-
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
-import requests
 import sympy as sp
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from .sympy_utils import safe_parse
 
-# Use a non-interactive backend for server-side rendering
-matplotlib.use("Agg")
 
 def home(request):
+    """Render the main calculator page"""
     return render(request, 'calc/home.html')
-
-def simple_interest(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            principal = float(data.get('principal', 0))
-            rate = float(data.get('rate', 0))
-            time = float(data.get('time', 0))
-
-            if principal <= 0 or rate <= 0 or time <= 0:
-                return JsonResponse({'error': 'All inputs must be positive numbers.'}, status=400)
-
-            si = (principal * rate * time) / 100
-            return JsonResponse({'result': round(si, 2)})
-        except (ValueError, TypeError, json.JSONDecodeError):
-            return JsonResponse({'error': 'Invalid input. Please provide valid numbers.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid HTTP method; POST required.'}, status=405)
-
-def compound_interest(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            principal = float(data.get('principal', 0))
-            rate = float(data.get('rate', 0))
-            time = float(data.get('time', 0))
-            frequency = float(data.get('frequency', 1))  # default to 1 if not provided
-
-            if principal <= 0 or rate <= 0 or time <= 0 or frequency <= 0:
-                return JsonResponse({'error': 'All inputs must be positive numbers.'}, status=400)
-
-            r = rate / 100
-            amount = principal * (1 + r / frequency) ** (frequency * time)
-            ci = amount - principal
-            return JsonResponse({'result': round(amount, 2), 'compound_interest': round(ci, 2)})
-        except (ValueError, TypeError, json.JSONDecodeError):
-            return JsonResponse({'error': 'Invalid input. Please provide valid numbers.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid HTTP method; POST required.'}, status=405)
-
-
-@csrf_exempt
-def plot_expression_mpl(request):
-    """
-    Plot a single-variable expression using NumPy + Matplotlib and return a base64 PNG.
-
-    Expected JSON payload (POST):
-        {
-          "expression": "sin(x)",
-          "variable": "x",            # one of x, y, z, t
-          "x_min": -5,
-          "x_max": 5,
-          "num_points": 400
-        }
-    """
-    # Basic CORS preflight handling
-    if request.method == "OPTIONS":
-        response = JsonResponse({"ok": True})
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response["Access-Control-Allow-Headers"] = "Content-Type"
-        return response
-
-    if request.method != "POST":
-        response = JsonResponse({"ok": False, "error": "Invalid HTTP method; POST required."}, status=405)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    try:
-        payload = json.loads(request.body or "{}")
-    except json.JSONDecodeError:
-        response = JsonResponse({"ok": False, "error": "Invalid JSON payload."}, status=400)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    expr_str = (payload.get("expression") or "").strip()
-    var_name = (payload.get("variable") or "x").strip()
-
-    if not expr_str:
-        response = JsonResponse({"ok": False, "error": "No expression provided."}, status=400)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    if var_name not in ("x", "y", "z", "t"):
-        response = JsonResponse({"ok": False, "error": "Variable must be one of x, y, z, t."}, status=400)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    try:
-        x_min = float(payload.get("x_min", -10))
-        x_max = float(payload.get("x_max", 10))
-        num_points = int(payload.get("num_points", 400))
-    except (TypeError, ValueError):
-        response = JsonResponse({"ok": False, "error": "Invalid range or num_points values."}, status=400)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    if x_min >= x_max:
-        response = JsonResponse({"ok": False, "error": "x_min must be less than x_max."}, status=400)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    if num_points <= 1 or num_points > 5000:
-        response = JsonResponse({"ok": False, "error": "num_points must be between 2 and 5000."}, status=400)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-    try:
-        # Safely parse expression using existing sympy helper
-        expr = safe_parse(expr_str)
-        var_symbol = sp.symbols(var_name)
-
-        # Convert sympy expression to a vectorized NumPy function
-        f = sp.lambdify(var_symbol, expr, modules=["numpy"])
-
-        xs = np.linspace(x_min, x_max, num_points)
-        ys = f(xs)
-        ys = np.array(ys, dtype=np.float64)
-
-        # Replace non-finite values with NaN so they don't break the plot
-        ys[~np.isfinite(ys)] = np.nan
-
-        if np.all(np.isnan(ys)):
-            raise ValueError("Expression could not be evaluated on the given range.")
-
-        # Styling for dark theme
-        plt.style.use("dark_background")
-        fig, ax = plt.subplots(figsize=(6, 4), dpi=120)
-        fig.patch.set_facecolor("#020617")  # dark slate
-        ax.set_facecolor("#020617")
-
-        ax.plot(xs, ys, color="#38bdf8", linewidth=2.0)
-        ax.set_xlabel(var_name, color="#e5e7eb")
-        ax.set_ylabel(f"f({var_name})", color="#e5e7eb")
-        ax.set_title(expr_str, color="#e5e7eb")
-
-        ax.grid(True, color="#1f2937", alpha=0.7)
-        for spine in ax.spines.values():
-            spine.set_color("#334155")
-
-        ax.tick_params(colors="#cbd5f5")
-        fig.tight_layout()
-
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format="png", bbox_inches="tight", facecolor=fig.get_facecolor())
-        plt.close(fig)
-        buffer.seek(0)
-        img_b64 = base64.b64encode(buffer.read()).decode("ascii")
-
-        response = JsonResponse({"ok": True, "image": img_b64})
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response["Access-Control-Allow-Headers"] = "Content-Type"
-        return response
-    except Exception as exc:  # noqa: BLE001
-        response = JsonResponse(
-            {
-                "ok": False,
-                "error": f"Failed to plot expression: {exc}",
-            },
-            status=400,
-        )
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response["Access-Control-Allow-Headers"] = "Content-Type"
-        return response
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AdvancedCalculusAPIView(View):
-    SUPPORTED_VARIABLES = {name: sp.symbols(name) for name in ('x', 'y', 'z', 't')}
-    LIMIT_LOCALS = {
-        'pi': sp.pi,
-        'e': sp.E,
-        'E': sp.E,
-        'oo': sp.oo,
-        'OO': sp.oo,
-        'inf': sp.oo,
-        'INF': sp.oo,
-        'infinity': sp.oo,
-        'Infinity': sp.oo,
-        '-oo': -sp.oo,
-        '-inf': -sp.oo,
-        '-Infinity': -sp.oo,
-    }
-
+    """Advanced Calculus API endpoint"""
+    
+    SUPPORTED_VARS = {name: sp.symbols(name) for name in ('x', 'y', 'z', 't')}
+    
     def post(self, request):
         try:
             payload = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({'ok': False, 'error': 'Invalid JSON payload'}, status=400)
-
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
         expr_str = (payload.get('expr') or '').strip()
         operation = payload.get('operation', 'simplify')
-        variable_key = payload.get('variable', 'x')
-        lower_limit = payload.get('lower_limit')
-        upper_limit = payload.get('upper_limit')
-        double_limits = payload.get('double_limits')
-
+        variable = payload.get('variable', 'x')
+        
         if not expr_str:
-            return JsonResponse({'ok': False, 'error': 'No expression provided'}, status=400)
-
-        var_symbol = self.SUPPORTED_VARIABLES.get(variable_key, sp.symbols(variable_key))
-
+            return JsonResponse({'error': 'No expression provided'}, status=400)
+        
         try:
             expr = safe_parse(expr_str)
-        except ValueError as exc:
-            return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
-
-        try:
-            if operation == 'partial_diff':
-                return self.handle_partial_derivative(expr, var_symbol)
-            if operation == 'indefinite_int':
-                return self.handle_indefinite_integral(expr, var_symbol)
-            if operation == 'definite_int':
-                return self.handle_definite_integral(expr, var_symbol, lower_limit, upper_limit)
-            if operation == 'double_int':
-                return self.handle_double_integral(expr, double_limits)
-            if operation == 'triple_int':
-                return self.handle_triple_integral(expr)
-            if operation == 'solve':
-                return self.handle_solve(expr, var_symbol)
-            return self.handle_simplify(expr)
-        except Exception as exc:
-            return JsonResponse({
-                'ok': False,
-                'error': str(exc),
-                'traceback': traceback.format_exc()
-            }, status=400)
-
-    def handle_partial_derivative(self, expr, var):
-        derivative = sp.diff(expr, var)
-        return JsonResponse({
-            'ok': True,
-            'operation': f'Partial Derivative ∂/∂{var}',
-            'result': str(derivative),
-            'latex_result': sp.latex(derivative),
-            'steps': [
-                {'description': 'Original Expression', 'latex': sp.latex(expr)},
-                {'description': f'Differentiate w.r.t. {var}', 'latex': sp.latex(derivative)}
-            ]
-        })
-
-    def handle_indefinite_integral(self, expr, var):
-        integral = sp.integrate(expr, var)
-        latex_result = f"{sp.latex(integral)} + C"
-        return JsonResponse({
-            'ok': True,
-            'operation': f'Indefinite Integral ∫ d{var}',
-            'result': f'{integral} + C',
-            'latex_result': latex_result,
-            'steps': [
-                {'description': 'Integrand', 'latex': sp.latex(expr)},
-                {'description': f'Integrate w.r.t. {var}', 'latex': latex_result}
-            ]
-        })
-
-    def handle_definite_integral(self, expr, var, lower_limit, upper_limit):
-        if lower_limit is None or upper_limit is None:
-            raise ValueError('Both lower and upper limits are required for definite integrals.')
-
-        lower = self.parse_limit(lower_limit)
-        upper = self.parse_limit(upper_limit)
-
-        result = sp.integrate(expr, (var, lower, upper))
-        latex_result = sp.latex(result)
-        try:
-            numerical_value = float(result.evalf())
-            numerical_str = f"{numerical_value:.6f}"
-        except Exception:
-            numerical_value = None
-            numerical_str = ''
-
-        return JsonResponse({
-            'ok': True,
-            'operation': f'Definite Integral ∫[{lower}, {upper}] d{var}',
-            'result': str(result),
-            'numerical': numerical_str,
-            'latex_result': latex_result,
-            'steps': [
-                {'description': 'Integrand', 'latex': sp.latex(expr)},
-                {'description': 'Apply limits', 'latex': f'[{sp.latex(lower)}, {sp.latex(upper)}]'},
-                {'description': 'Evaluate', 'latex': latex_result + (f' \\approx {numerical_str}' if numerical_str else '')}
-            ]
-        })
-
-    def handle_double_integral(self, expr, limits):
-        x, y = sp.symbols('x y')
-        if limits and isinstance(limits, dict) and limits.get('use_limits'):
-            x_lower = self.parse_limit(limits.get('x_lower', 0))
-            x_upper = self.parse_limit(limits.get('x_upper', 1))
-            y_lower = self.parse_limit(limits.get('y_lower', 0))
-            y_upper = self.parse_limit(limits.get('y_upper', 1))
-            intermediate = sp.integrate(expr, (x, x_lower, x_upper))
-            result = sp.integrate(intermediate, (y, y_lower, y_upper))
-            limits_desc = f"x:[{x_lower},{x_upper}], y:[{y_lower},{y_upper}]"
-        else:
-            intermediate = sp.integrate(expr, x)
-            result = sp.integrate(intermediate, y)
-            limits_desc = 'Indefinite integral'
-
-        return JsonResponse({
-            'ok': True,
-            'operation': 'Double Integral ∫∫ f(x,y) dx dy',
-            'result': str(result),
-            'latex_result': sp.latex(result),
-            'steps': [
-                {'description': 'Integrand', 'latex': sp.latex(expr)},
-                {'description': 'Integrate w.r.t. x', 'latex': sp.latex(intermediate)},
-                {'description': 'Integrate w.r.t. y', 'latex': sp.latex(result)}
-            ],
-            'limits': limits_desc
-        })
-
-    def handle_triple_integral(self, expr):
-        x, y, z = sp.symbols('x y z')
-        first = sp.integrate(expr, x)
-        second = sp.integrate(first, y)
-        third = sp.integrate(second, z)
-        return JsonResponse({
-            'ok': True,
-            'operation': 'Triple Integral ∫∫∫ f(x,y,z) dx dy dz',
-            'result': str(third),
-            'latex_result': sp.latex(third),
-            'steps': [
-                {'description': 'Integrand', 'latex': sp.latex(expr)},
-                {'description': 'Integrate w.r.t. x', 'latex': sp.latex(first)},
-                {'description': 'Integrate w.r.t. y', 'latex': sp.latex(second)},
-                {'description': 'Integrate w.r.t. z', 'latex': sp.latex(third)},
-            ]
-        })
-
+            var = self.SUPPORTED_VARS.get(variable, sp.symbols(variable))
+            
+            if operation == 'simplify':
+                return self.handle_simplify(expr)
+            elif operation == 'expand':
+                return self.handle_expand(expr)
+            elif operation == 'factor':
+                return self.handle_factor(expr)
+            elif operation == 'differentiate':
+                return self.handle_differentiate(expr, var)
+            elif operation == 'partial_derivative':
+                return self.handle_partial_derivative(expr, var)
+            elif operation == 'indefinite_int':
+                return self.handle_indefinite_integral(expr, var)
+            elif operation == 'definite_int':
+                lower = payload.get('lower_limit', '0')
+                upper = payload.get('upper_limit', '1')
+                return self.handle_definite_integral(expr, var, lower, upper)
+            elif operation == 'limit':
+                point = payload.get('limit_point', '0')
+                return self.handle_limit(expr, var, point)
+            elif operation == 'solve':
+                return self.handle_solve(expr, var)
+            elif operation == 'roots':
+                return self.handle_roots(expr, var)
+            elif operation == 'series':
+                point = payload.get('series_point', '0')
+                n_terms = int(payload.get('n_terms', 5))
+                return self.handle_series(expr, var, point, n_terms)
+            elif operation == 'trig_simplify':
+                return self.handle_trig_simplify(expr)
+            elif operation == 'trig_expand':
+                return self.handle_trig_expand(expr)
+            elif operation == 'plot_2d':
+                return self.handle_plot_2d(expr_str, payload)
+            elif operation == 'plot_3d':
+                return self.handle_plot_3d(expr_str, payload)
+            else:
+                return JsonResponse({'error': f'Unknown operation: {operation}'}, status=400)
+        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
     def handle_simplify(self, expr):
         simplified = sp.simplify(expr)
         return JsonResponse({
             'ok': True,
             'operation': 'Simplify',
             'result': str(simplified),
-            'latex_result': sp.latex(simplified),
-            'steps': [
-                {'description': 'Simplified Expression', 'latex': sp.latex(simplified)}
-            ]
+            'simplified': str(simplified)
         })
-
-    def handle_solve(self, expr, var):
-        solutions = sp.solve(expr, var, dict=True)
-        solutions_str = [str(sol.get(var, sol)) for sol in solutions] if solutions else []
-        solutions_latex = [sp.latex(sol.get(var, sol)) for sol in solutions] if solutions else []
+    
+    def handle_expand(self, expr):
+        expanded = sp.expand(expr)
         return JsonResponse({
             'ok': True,
-            'operation': f'Solve for {var}',
-            'result': solutions_str,
-            'latex_result': solutions_latex
+            'operation': 'Expand',
+            'result': str(expanded),
+            'steps': [f'Expanded form: {expanded}']
         })
-
-    def parse_limit(self, value):
-        if value is None or value == '':
-            raise ValueError('Limit value cannot be empty.')
-        if isinstance(value, (int, float)):
-            return sp.sympify(value)
-        text = str(value).strip()
-        if text in self.LIMIT_LOCALS:
-            return self.LIMIT_LOCALS[text]
+    
+    def handle_factor(self, expr):
+        factored = sp.factor(expr)
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Factorize',
+            'result': str(factored),
+            'steps': [f'Factored form: {factored}']
+        })
+    
+    def handle_differentiate(self, expr, var):
+        derivative = sp.diff(expr, var)
+        return JsonResponse({
+            'ok': True,
+            'operation': f'Differentiate (d/d{var})',
+            'result': str(derivative),
+            'steps': [
+                f'Original: {expr}',
+                f'd/d{var}({expr}) = {derivative}'
+            ]
+        })
+    
+    def handle_partial_derivative(self, expr, var):
+        derivative = sp.diff(expr, var)
+        return JsonResponse({
+            'ok': True,
+            'operation': f'Partial Derivative',
+            'result': str(derivative),
+            'steps': [
+                f'Original: {expr}',
+                f'Derivative: {derivative}'
+            ]
+        })
+    
+    def handle_indefinite_integral(self, expr, var):
+        integral = sp.integrate(expr, var)
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Indefinite Integral',
+            'result': f'{integral} + C',
+            'steps': [
+                f'Integrand: {expr}',
+                f'Integral: {integral} + C'
+            ]
+        })
+    
+    def handle_definite_integral(self, expr, var, lower_str, upper_str):
         try:
-            return sp.sympify(text, locals=self.LIMIT_LOCALS)
-        except Exception as exc:
-            raise ValueError(f'Invalid limit value "{value}": {exc}')
+            lower = sp.sympify(lower_str)
+            upper = sp.sympify(upper_str)
+        except:
+            return JsonResponse({'error': 'Invalid limits'}, status=400)
+        
+        result = sp.integrate(expr, (var, lower, upper))
+        try:
+            numerical = float(result.evalf())
+        except:
+            numerical = None
+        
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Definite Integral',
+            'result': str(result),
+            'numerical': f'{numerical:.6f}' if numerical else str(result),
+            'steps': [
+                f'Integrand: {expr}',
+                f'Limits: [{lower}, {upper}]',
+                f'Result: {result}'
+            ]
+        })
+    
+    def handle_solve(self, expr, var):
+        solutions = sp.solve(expr, var)
+        solutions_str = [str(sol) for sol in solutions] if solutions else []
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Solve',
+            'result': solutions_str,
+            'steps': [f'Solutions: {", ".join(solutions_str)}'] if solutions_str else ['No real solutions found']
+        })
+    
+    def handle_limit(self, expr, var, point_str):
+        try:
+            point = sp.sympify(point_str)
+            limit_result = sp.limit(expr, var, point)
+            return JsonResponse({
+                'ok': True,
+                'operation': f'Limit as {var} → {point}',
+                'result': str(limit_result),
+                'steps': [f'lim({var}→{point}) {expr} = {limit_result}']
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    def handle_roots(self, expr, var):
+        roots = sp.solve(expr, var)
+        roots_str = [str(r) for r in roots] if roots else []
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Find Roots',
+            'result': roots_str,
+            'steps': [f'Roots: {", ".join(roots_str)}'] if roots_str else ['No roots found']
+        })
+    
+    def handle_series(self, expr, var, point_str, n_terms):
+        try:
+            point = sp.sympify(point_str)
+            series_expansion = sp.series(expr, var, point, n=n_terms).removeO()
+            return JsonResponse({
+                'ok': True,
+                'operation': f'Taylor Series (n={n_terms})',
+                'result': str(series_expansion),
+                'steps': [f'Series around {var}={point}: {series_expansion}']
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    def handle_trig_simplify(self, expr):
+        simplified = sp.trigsimp(expr)
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Simplify Trigonometric',
+            'result': str(simplified),
+            'steps': [f'Simplified: {simplified}']
+        })
+    
+    def handle_trig_expand(self, expr):
+        expanded = sp.expand_trig(expr)
+        return JsonResponse({
+            'ok': True,
+            'operation': 'Expand Trigonometric',
+            'result': str(expanded),
+            'steps': [f'Expanded: {expanded}']
+        })
+    
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CurrencyConverterAPIView(View):
-    API_TEMPLATE = 'https://api.exchangerate-api.com/v4/latest/{base}'
-    FALLBACK_RATES = {
+    """Currency Converter API endpoint"""
+    
+    RATES = {
         'USD': 1,
         'INR': 83.12,
         'EUR': 0.92,
         'GBP': 0.79,
-        'JPY': 150.54,
-        'AUD': 1.53,
-        'CAD': 1.36,
-        'CNY': 7.18,
-        'CHF': 0.88,
-        'AED': 3.67,
+        'JPY': 149.50
     }
-
+    
     def post(self, request):
         try:
             payload = json.loads(request.body)
-            amount = float(payload.get('amount'))
-            from_currency = payload.get('from_currency')
-            to_currency = payload.get('to_currency')
-
+            amount = float(payload.get('amount', 0))
+            from_curr = payload.get('from_currency', 'USD')
+            to_curr = payload.get('to_currency', 'INR')
+            
             if amount <= 0:
-                raise ValueError('Amount must be positive.')
-            if not from_currency or not to_currency:
-                raise ValueError('Both currencies are required.')
-        except (ValueError, TypeError, json.JSONDecodeError) as exc:
-            return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
-
-        rates_data = self.fetch_rates(from_currency.upper())
-        if not rates_data['rates']:
-            return JsonResponse({'ok': False, 'error': 'Unable to fetch exchange rates.'}, status=503)
-
-        rate = self.calculate_rate(
-            rates_data['rates'],
-            rates_data['base'],
-            from_currency.upper(),
-            to_currency.upper()
-        )
-
-        if rate is None:
-            return JsonResponse({'ok': False, 'error': 'Conversion rate unavailable for selected currencies.'}, status=400)
-
-        converted_amount = amount * rate
-        result_text = f"{amount:.2f} {from_currency.upper()} = {converted_amount:.2f} {to_currency.upper()}"
-
-        return JsonResponse({
-            'ok': True,
-            'result': result_text,
-            'rate': round(rate, 4),
-            'timestamp': rates_data['timestamp'].isoformat(),
-            'fallback': rates_data['fallback']
-        })
-
-    def fetch_rates(self, base_currency):
-        try:
-            response = requests.get(self.API_TEMPLATE.format(base=base_currency), timeout=5)
-            response.raise_for_status()
-            data = response.json()
-            rates = data.get('rates', {})
-            timestamp = datetime.fromtimestamp(data.get('time_last_updated', datetime.utcnow().timestamp()))
-            return {
-                'rates': rates,
-                'base': data.get('base', base_currency),
-                'timestamp': timestamp,
-                'fallback': False
-            }
-        except Exception:
-            rates = self.FALLBACK_RATES
-            timestamp = datetime.utcnow()
-            return {
-                'rates': rates,
-                'base': 'USD',
-                'timestamp': timestamp,
-                'fallback': True
-            }
-
-    @staticmethod
-    def calculate_rate(rates, base, from_currency, to_currency):
-        if not rates:
-            return None
-        if from_currency == to_currency:
-            return 1.0
-
-        def rate_for(currency):
-            if currency == base:
-                return 1.0
-            return rates.get(currency)
-
-        from_rate = rate_for(from_currency)
-        to_rate = rate_for(to_currency)
-        if not from_rate or not to_rate:
-            return None
-        return to_rate / from_rate
+                return JsonResponse({'error': 'Amount must be positive'}, status=400)
+            
+            from_rate = self.RATES.get(from_curr, 1)
+            to_rate = self.RATES.get(to_curr, 1)
+            
+            converted = amount * (to_rate / from_rate)
+            
+            return JsonResponse({
+                'ok': True,
+                'result': f'{amount:.2f} {from_curr} = {converted:.2f} {to_curr}',
+                'converted_amount': round(converted, 2),
+                'rate': round(to_rate / from_rate, 4)
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)

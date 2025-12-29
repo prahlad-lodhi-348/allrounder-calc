@@ -1,15 +1,19 @@
 # AllRounder Calc
 
-A Mathway-style web app built with Django, SymPy, and Plotly. It evaluates mathematical expressions, shows symbolic steps, and renders interactive graphs.
+A Mathway-style web app built with Django, SymPy, and NumPy. It evaluates mathematical expressions, shows symbolic steps, and renders interactive 2D/3D graphs.
 
 **Created by: Prahlad Lodhi**
 
 ## Features
 
-- Expression input with symbolic math evaluation
-- Steps shown in LaTeX and plain text
-- Operations: simplify, differentiate, integrate, solve
-- Interactive graphs with zoom and pan using Plotly
+- Advanced expression input with symbolic math evaluation
+- Step-by-step solutions in LaTeX and plain text
+- Operations: simplify, expand, factor, differentiate, integrate, solve, limits, series, and more
+- Interactive 2D and 3D plotting
+- Financial calculators (Simple Interest, Compound Interest)
+- Currency converter
+- Units converter
+- Health and business calculation tools
 - Secure expression parsing using SymPy's safe transformations
 - Deployment-ready with WhiteNoise and Render.com support
 
@@ -80,24 +84,14 @@ Run tests with:
 python manage.py test calc
 ```
 
-## Upcoming Features
+## Key Operations Supported
 
-- User authentication and login system
-- Operation history tracking (with localStorage and database)
-- Scientific calculator with advanced functions
-- Formula reference library
-- Physics problem solver
-- Chemistry problem solver with chemical equations
-- Element and compound constants database
-- Interactive step-by-step solutions
-
-## Future Extensions
-
-- Numeric substitution (e.g., `x=2`) with `subs` and `evalf`.
-- 3D surface plotting for functions of two variables.
-- Limits and series expansions.
-- Factoring and expanding actions.
-- Exporting plots as standalone HTML files.
-- Better frontend progressive enhancements and styling.
+- **Basic**: Simplify, Expand, Factorize
+- **Calculus**: Differentiate, Partial Derivatives, Indefinite/Definite Integrals, Limits, Series Expansion
+- **Algebra**: Solve Equations, Find Roots
+- **Trigonometry**: Simplify & Expand Trig expressions
+- **Plotting**: 2D and 3D graphing
+- **Financial**: Simple/Compound Interest, EMI, Currency Conversion
+- **Utilities**: Units Conversion, Health Calculators
 
 For more details, refer to SymPy and Plotly documentation.

@@ -5,7 +5,7 @@ import json
 class CalculatorsApiTests(TestCase):
 
     def test_simple_interest_calculation(self):
-        url = reverse('api_simple_interest')
+        url = reverse('simple-interest-api')
         data = {
             'principal': 1000,
             'rate': 5,
@@ -15,10 +15,10 @@ class CalculatorsApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
         self.assertIn('result', response_data)
-        self.assertAlmostEqual(response_data['result'], 100.0, places=2)
+        self.assertAlmostEqual(response_data['result']['simple_interest'], 100.0, places=2)
 
     def test_compound_interest_calculation(self):
-        url = reverse('api_compound_interest')
+        url = reverse('compound-interest-api')
         data = {
             'principal': 1000,
             'rate': 5,
@@ -29,10 +29,10 @@ class CalculatorsApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
         self.assertIn('result', response_data)
-        self.assertAlmostEqual(response_data['result'], 1102.5, places=2)
+        self.assertAlmostEqual(response_data['result']['amount'], 1102.5, places=2)
 
     def test_plot_api_with_lowercase_x(self):
-        url = reverse('api_plot')
+        url = reverse('plot-api')
         data = {
             'expr': 'x**2',
             'xmin': -5,
@@ -44,11 +44,11 @@ class CalculatorsApiTests(TestCase):
         response_data = json.loads(response.content)
         self.assertTrue(response_data['ok'])
         self.assertIn('data', response_data)
-        self.assertEqual(len(response_data['data']['x']), 100)
-        self.assertEqual(len(response_data['data']['y']), 100)
+        self.assertEqual(len(response_data['data']['x_values']), 100)
+        self.assertEqual(len(response_data['data']['y_values']), 100)
 
     def test_plot_api_with_capital_X(self):
-        url = reverse('api_plot')
+        url = reverse('plot-api')
         data = {
             'expr': 'X**2',
             'xmin': -5,
@@ -60,11 +60,11 @@ class CalculatorsApiTests(TestCase):
         response_data = json.loads(response.content)
         self.assertTrue(response_data['ok'])
         self.assertIn('data', response_data)
-        self.assertEqual(len(response_data['data']['x']), 100)
-        self.assertEqual(len(response_data['data']['y']), 100)
+        self.assertEqual(len(response_data['data']['x_values']), 100)
+        self.assertEqual(len(response_data['data']['y_values']), 100)
 
     def test_plot_api_with_y_variable(self):
-        url = reverse('api_plot')
+        url = reverse('plot-api')
         data = {
             'expr': 'y**2 + 2*y + 1',
             'xmin': -5,
@@ -76,5 +76,5 @@ class CalculatorsApiTests(TestCase):
         response_data = json.loads(response.content)
         self.assertTrue(response_data['ok'])
         self.assertIn('data', response_data)
-        self.assertEqual(len(response_data['data']['x']), 100)
-        self.assertEqual(len(response_data['data']['y']), 100)
+        self.assertEqual(len(response_data['data']['x_values']), 100)
+        self.assertEqual(len(response_data['data']['y_values']), 100)
